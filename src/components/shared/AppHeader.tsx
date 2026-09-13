@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import ThemeToggle from "./ThemeToggle"
 
 export default function AppHeader() {
   const { user, logout } = useAuth()
@@ -10,6 +11,7 @@ export default function AppHeader() {
       <span className="font-semibold">Finance Tracker</span>
       <div className="flex items-center gap-3">
         {user ? <span className="text-sm text-muted-foreground">{user.name}</span> : null}
+        <ThemeToggle />
         <Button variant="ghost" size="sm" onClick={logout}>
           <LogOut className="size-4" />
           Logout

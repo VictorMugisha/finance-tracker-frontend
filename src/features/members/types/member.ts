@@ -19,3 +19,16 @@ export interface MemberDto {
   createdAt: string
   user: LinkedUserDto | null
 }
+
+export interface CreateMemberInput {
+  name: string
+  phone: string | null
+  role: GroupRole | null
+}
+
+export interface UpdateMemberInput {
+  name?: string
+  phone?: string | null
+  role?: GroupRole | null
+  isActive?: boolean
+}

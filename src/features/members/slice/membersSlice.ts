@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { Envelope } from "@/api/types"
+import type { ErrorToastPayload } from "@/api/errors"
+import { toErrorToastPayload } from "@/api/errors"
 import { membersApi } from "../api/membersApi"
-import type { MemberDto } from "../types/member"
+import type { CreateMemberInput, MemberDto, UpdateMemberInput } from "../types/member"
 
 interface MembersState {
   members: MemberDto[]
@@ -20,6 +22,42 @@ export const fetchMembers = createAsyncThunk<Envelope<MemberDto[]>, string | und
   (search) => membersApi.listMembers(search)
 )
 
+export const createMember = createAsyncThunk<
+  Envelope<MemberDto>,
+  CreateMemberInput,
+  { rejectValue: ErrorToastPayload }
+>("members/createMember", async (input, { rejectWithValue }) => {
+  try {
+    return await membersApi.createMember(input)
+  } catch (error) {
+    return rejectWithValue(toErrorToastPayload(error))
+  }
+})
+
+export const updateMember = createAsyncThunk<
+  Envelope<MemberDto>,
+  { id: string; input: UpdateMemberInput },
+  { rejectValue: ErrorToastPayload }
+>("members/updateMember", async ({ id, input }, { rejectWithValue }) => {
+  try {
+    return await membersApi.updateMember(id, input)
+  } catch (error) {
+    return rejectWithValue(toErrorToastPayload(error))
+  }
+})
+
+export const deactivateMember = createAsyncThunk<
+  Envelope<MemberDto>,
+  string,
+  { rejectValue: ErrorToastPayload }
+>("members/deactivateMember", async (id, { rejectWithValue }) => {
+  try {
+    return await membersApi.deactivateMember(id)
+  } catch (error) {
+    return rejectWithValue(toErrorToastPayload(error))
+  }
+})
+
 const membersSlice = createSlice({
   name: "members",
   initialState,
@@ -37,6 +75,17 @@ const membersSlice = createSlice({
       .addCase(fetchMembers.rejected, (state, action) => {
         state.status = "failed"
         state.error = action.error.message ?? "Failed to fetch members"
+      })
+      .addCase(createMember.fulfilled, (state, action) => {
+        state.members = [action.payload.data, ...state.members]
+      })
+      .addCase(updateMember.fulfilled, (state, action) => {
+        const updated = action.payload.data
+        state.members = state.members.map((member) => (member.id === updated.id ? updated : member))
+      })
+      .addCase(deactivateMember.fulfilled, (state, action) => {
+        const updated = action.payload.data
+        state.members = state.members.map((member) => (member.id === updated.id ? updated : member))
       })
   },
 })
