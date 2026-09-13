@@ -1,23 +1,26 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Navigate, Route, Routes } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
+import ProtectedRoute from "@/components/shared/ProtectedRoute"
+import AuthPage from "@/features/auth/AuthPage"
+import MembersPage from "@/features/members/MembersPage"
 
-function App() {
+export default function App() {
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Finance Tracker</CardTitle>
-          <CardDescription>Group contributions & finance tracking scaffold</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            Frontend scaffold is ready. Backend API will be wired up next.
-          </p>
-          <Button>Get started</Button>
-        </CardContent>
-      </Card>
-    </main>
+    <>
+      <Routes>
+        <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/members"
+          element={
+            <ProtectedRoute permission="members:read">
+              <MembersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/members" replace />} />
+        <Route path="*" element={<Navigate to="/members" replace />} />
+      </Routes>
+      <Toaster position="top-center" />
+    </>
   )
 }
-
-export default App
