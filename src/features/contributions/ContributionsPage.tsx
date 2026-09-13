@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import ContributionFormDialog from "./components/ContributionFormDialog"
 import ContributionsList from "./components/ContributionsList"
@@ -40,6 +41,7 @@ export default function ContributionsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ContributionDto | null>(null)
   const [closeTarget, setCloseTarget] = useState<ContributionDto | null>(null)
+  const { key: formKey, remount: remountForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canCreate = has("contributions:create")
@@ -48,11 +50,13 @@ export default function ContributionsPage() {
 
   const openCreate = () => {
     setEditing(null)
+    remountForm()
     setFormOpen(true)
   }
 
   const openEdit = (contribution: ContributionDto) => {
     setEditing(contribution)
+    remountForm()
     setFormOpen(true)
   }
 
@@ -162,7 +166,7 @@ export default function ContributionsPage() {
       </main>
 
       <ContributionFormDialog
-        key={editing?.id ?? "new"}
+        key={formKey}
         open={formOpen}
         onOpenChange={setFormOpen}
         contribution={editing}

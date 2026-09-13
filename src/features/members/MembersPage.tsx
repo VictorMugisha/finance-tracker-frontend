@@ -5,6 +5,7 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useRemountKey } from "@/hooks/useRemountKey"
 import MemberFormDialog from "./components/MemberFormDialog"
 import MemberList from "./components/MemberList"
 import { useMembers } from "./hooks/useMembers"
@@ -16,16 +17,19 @@ export default function MembersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<MemberDto | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<MemberDto | null>(null)
+  const { key: memberFormKey, remount: remountMemberForm } = useRemountKey()
 
   const canWrite = user ? user.isAdmin || user.permissions.includes("members:write") : false
 
   const openCreate = () => {
     setEditing(null)
+    remountMemberForm()
     setFormOpen(true)
   }
 
   const openEdit = (member: MemberDto) => {
     setEditing(member)
+    remountMemberForm()
     setFormOpen(true)
   }
 
@@ -84,7 +88,7 @@ export default function MembersPage() {
         )}
       </main>
       <MemberFormDialog
-        key={editing?.id ?? "new"}
+        key={memberFormKey}
         open={formOpen}
         onOpenChange={setFormOpen}
         member={editing}

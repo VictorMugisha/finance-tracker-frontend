@@ -11,6 +11,7 @@ import { usePayments } from "@/features/payments/hooks/usePayments"
 import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentDto } from "@/features/payments/types/payment"
+import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import { useContributionDetail } from "./hooks/useContributionDetail"
 import type { OpenMemberReportItem, TargetedMemberReportItem } from "./types/contribution"
@@ -31,6 +32,9 @@ export default function MemberContributionDetailPage() {
   const [assignmentOpen, setAssignmentOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [editingPayment, setEditingPayment] = useState<PaymentDto | null>(null)
+  const { key: assignmentFormKey, remount: remountAssignmentForm } = useRemountKey()
+  const { key: addPaymentFormKey, remount: remountAddPaymentForm } = useRemountKey()
+  const { key: correctPaymentFormKey, remount: remountCorrectPaymentForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
 
@@ -59,14 +63,27 @@ export default function MemberContributionDetailPage() {
   const isTargeted = contribution.type === "TARGETED"
   const isOpen = contribution.status === "OPEN"
   const canEditAssignment = isTargeted && isOpen && has("assignments:write")
-  const canRecordPayment = isOpen && has("payments:record")
+  const canRecordPayment = has("payments:record")
   const canUpdatePayment = has("payments:update")
 
   const memberEntry = report?.members.find((member) => member.memberId === memberId)
   const memberName = memberEntry?.name ?? payments[0]?.memberName ?? "Member"
   const assignment = assignments.find((item) => item.memberId === memberId)
 
-  const openCorrectPayment = (payment: PaymentDto) => setEditingPayment(payment)
+  const openCorrectPayment = (payment: PaymentDto) => {
+    setEditingPayment(payment)
+    remountCorrectPaymentForm()
+  }
+
+  const openEditAssignment = () => {
+    remountAssignmentForm()
+    setAssignmentOpen(true)
+  }
+
+  const openAddPayment = () => {
+    remountAddPaymentForm()
+    setPaymentOpen(true)
+  }
 
   const handleAssignmentSubmit = async (input: {
     memberId: string
@@ -127,13 +144,13 @@ export default function MemberContributionDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {canEditAssignment && assignment ? (
-              <Button onClick={() => setAssignmentOpen(true)}>
+              <Button onClick={openEditAssignment}>
                 <Pencil className="size-4" />
                 Edit Assignment
               </Button>
             ) : null}
             {canRecordPayment ? (
-              <Button variant="outline" onClick={() => setPaymentOpen(true)}>
+              <Button variant="outline" onClick={openAddPayment}>
                 <Plus className="size-4" />
                 Add Payment
               </Button>
@@ -212,7 +229,7 @@ export default function MemberContributionDetailPage() {
 
       {canEditAssignment && assignment ? (
         <AssignmentFormDialog
-          key={assignment.id}
+          key={`assignment-${assignmentFormKey}`}
           open={assignmentOpen}
           onOpenChange={setAssignmentOpen}
           assignment={assignment}
@@ -220,7 +237,7 @@ export default function MemberContributionDetailPage() {
         />
       ) : null}
       <PaymentFormDialog
-        key="add"
+        key={`payment-add-${addPaymentFormKey}`}
         open={paymentOpen}
         onOpenChange={setPaymentOpen}
         payment={null}
@@ -228,7 +245,7 @@ export default function MemberContributionDetailPage() {
         onSubmit={handlePaymentSubmit}
       />
       <PaymentFormDialog
-        key={editingPayment?.id ?? "correct"}
+        key={`payment-correct-${correctPaymentFormKey}`}
         open={editingPayment !== null}
         onOpenChange={(open) => {
           if (!open) {

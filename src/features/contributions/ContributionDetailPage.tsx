@@ -12,6 +12,7 @@ import AssignmentFormDialog from "@/features/assignments/components/AssignmentFo
 import { usePaymentActions } from "@/features/payments/hooks/usePayments"
 import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
+import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import ReportTable from "./components/ReportTable"
 import { useContributionDetail } from "./hooks/useContributionDetail"
@@ -35,6 +36,8 @@ export default function ContributionDetailPage() {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentMember, setPaymentMember] = useState<{ id: string; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<AssignmentDto | null>(null)
+  const { key: assignmentFormKey, remount: remountAssignmentForm } = useRemountKey()
+  const { key: paymentFormKey, remount: remountPaymentForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canUpdate = has("contributions:update")
@@ -64,7 +67,7 @@ export default function ContributionDetailPage() {
   const isTargeted = contribution.type === "TARGETED"
   const isOpen = contribution.status === "OPEN"
   const canAssign = isTargeted && isOpen && has("assignments:write")
-  const canRecordPayment = isOpen && has("payments:record")
+  const canRecordPayment = has("payments:record")
 
   const memberName = (memberId: string): string =>
     report?.members.find((member) => member.memberId === memberId)?.name ?? ""
@@ -74,6 +77,7 @@ export default function ContributionDetailPage() {
 
   const openAddAssignment = () => {
     setEditingAssignment(null)
+    remountAssignmentForm()
     setAssignmentOpen(true)
   }
 
@@ -81,6 +85,7 @@ export default function ContributionDetailPage() {
     const assignment = findAssignment(memberId)
     if (!assignment) return
     setEditingAssignment(assignment)
+    remountAssignmentForm()
     setAssignmentOpen(true)
   }
 
@@ -92,6 +97,7 @@ export default function ContributionDetailPage() {
 
   const openAddPayment = (memberId?: string) => {
     setPaymentMember(memberId ? { id: memberId, name: memberName(memberId) } : null)
+    remountPaymentForm()
     setPaymentOpen(true)
   }
 
@@ -235,14 +241,14 @@ export default function ContributionDetailPage() {
       </main>
 
       <AssignmentFormDialog
-        key={editingAssignment?.id ?? "new"}
+        key={`assignment-${assignmentFormKey}`}
         open={assignmentOpen}
         onOpenChange={setAssignmentOpen}
         assignment={editingAssignment}
         onSubmit={handleAssignmentSubmit}
       />
       <PaymentFormDialog
-        key={paymentMember?.id ?? "new"}
+        key={`payment-${paymentFormKey}`}
         open={paymentOpen}
         onOpenChange={setPaymentOpen}
         payment={null}

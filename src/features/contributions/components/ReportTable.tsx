@@ -62,6 +62,10 @@ function MemberReportActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onViewDetails(memberId)}>
+          <Eye className="size-4" />
+          View Details
+        </DropdownMenuItem>
         {canRecordPayment ? (
           <DropdownMenuItem onClick={() => onAddPayment(memberId)}>
             <Plus className="size-4" />
@@ -74,10 +78,6 @@ function MemberReportActionsMenu({
             Edit Assignment
           </DropdownMenuItem>
         ) : null}
-        <DropdownMenuItem onClick={() => onViewDetails(memberId)}>
-          <Eye className="size-4" />
-          View Details
-        </DropdownMenuItem>
         {canAssign ? (
           <DropdownMenuItem variant="destructive" onClick={() => onRemoveAssignment(memberId)}>
             <Trash2 className="size-4" />
