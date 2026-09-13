@@ -3,7 +3,7 @@ import { ApiError } from "@/api/errors"
 import { tokenStorage } from "@/utils/token"
 
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "/api",
 })
 
 api.interceptors.request.use((config) => {
