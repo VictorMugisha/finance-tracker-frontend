@@ -12,34 +12,52 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/shared/DatePicker"
+import { NumericInput } from "@/components/shared/NumericInput"
 import MemberSelect from "@/features/members/components/MemberSelect"
 import type { PaymentDto } from "../types/payment"
+
+export interface PaymentFormSubmitInput {
+  memberId: string
+  amount: string
+  note: string | null
+  paidAt: string
+}
 
 interface PaymentFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   payment: PaymentDto | null
-  onSubmit: (input: { memberId: string; amount: string; note: string | null }) => Promise<boolean>
+  member?: { id: string; name: string } | null
+  onSubmit: (input: PaymentFormSubmitInput) => Promise<boolean>
 }
 
 export default function PaymentFormDialog({
   open,
   onOpenChange,
   payment,
+  member,
   onSubmit,
 }: PaymentFormDialogProps) {
-  const [memberId, setMemberId] = useState(payment?.memberId ?? "")
+  const [memberId, setMemberId] = useState(payment?.memberId ?? member?.id ?? "")
   const [amount, setAmount] = useState(payment?.amount ?? "")
   const [note, setNote] = useState(payment?.note ?? "")
+  const [paidAt, setPaidAt] = useState<Date>(
+    payment?.paidAt ? new Date(payment.paidAt) : new Date()
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const effectiveMemberId = payment?.memberId ?? member?.id ?? memberId
+  const fixedMemberName = payment?.memberName ?? member?.name
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
     const ok = await onSubmit({
-      memberId: memberId || payment?.memberId || "",
+      memberId: effectiveMemberId,
       amount: amount.trim(),
       note: note.trim() || null,
+      paidAt: paidAt.toISOString(),
     })
     setIsSubmitting(false)
     if (ok) {
@@ -47,7 +65,7 @@ export default function PaymentFormDialog({
     }
   }
 
-  const submitDisabled = payment ? amount.trim() === "" : memberId === "" || amount.trim() === ""
+  const submitDisabled = amount.trim() === "" || effectiveMemberId === ""
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,10 +77,10 @@ export default function PaymentFormDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {payment ? (
+          {fixedMemberName ? (
             <div className="flex flex-col gap-2">
               <Label>Member</Label>
-              <p className="text-sm font-medium">{payment.memberName}</p>
+              <p className="text-sm font-medium">{fixedMemberName}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -72,13 +90,12 @@ export default function PaymentFormDialog({
           )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="payment-amount">Amount</Label>
-            <Input
+            <NumericInput
               id="payment-amount"
-              inputMode="decimal"
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={setAmount}
               placeholder="100"
-              required
+              decimals={2}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -87,6 +104,14 @@ export default function PaymentFormDialog({
               id="payment-note"
               value={note}
               onChange={(event) => setNote(event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="payment-date">Date</Label>
+            <DatePicker
+              id="payment-date"
+              value={paidAt}
+              onChange={(date) => setPaidAt(date ?? new Date())}
             />
           </div>
           <DialogFooter>

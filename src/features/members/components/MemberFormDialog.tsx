@@ -12,13 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import type { CreateMemberInput, GroupRole, MemberDto } from "../types/member"
 
 const ROLES: { value: GroupRole; label: string }[] = [
@@ -46,8 +40,14 @@ export default function MemberFormDialog({
   const [role, setRole] = useState<GroupRole | null>(member?.role ?? null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const PHONE_REGEX = /^07\d{8}$/
+  const phoneError = phone.trim() !== "" && !PHONE_REGEX.test(phone.trim())
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (phoneError) {
+      return
+    }
     setIsSubmitting(true)
     const ok = await onSubmit({ name: name.trim(), phone: phone.trim() || null, role })
     setIsSubmitting(false)
@@ -86,26 +86,29 @@ export default function MemberFormDialog({
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               placeholder="07XXXXXXXX"
+              pattern="^07\d{8}$"
+              title="Phone must be 10 digits starting with 07"
+              aria-invalid={phoneError || undefined}
             />
+            {phoneError ? (
+              <p className="text-xs text-destructive">Phone must be 10 digits starting with 07</p>
+            ) : null}
           </div>
           <div className="flex flex-col gap-2">
             <Label>Role</Label>
-            <Select
+            <SearchableSelectDropdown
+              options={[
+                { value: "none", label: "No role" },
+                ...ROLES.map((roleOption) => ({
+                  value: roleOption.value,
+                  label: roleOption.label,
+                })),
+              ]}
               value={role ?? "none"}
-              onValueChange={(value) => setRole(value === "none" ? null : (value as GroupRole))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No role</SelectItem>
-                {ROLES.map((roleOption) => (
-                  <SelectItem key={roleOption.value} value={roleOption.value}>
-                    {roleOption.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(value) => setRole(value === "none" ? null : (value as GroupRole))}
+              searchPlaceholder="Search..."
+              emptyMessage="No results found."
+            />
           </div>
           <DialogFooter>
             <Button
@@ -116,7 +119,7 @@ export default function MemberFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || name.trim() === ""}>
+            <Button type="submit" disabled={isSubmitting || name.trim() === "" || phoneError}>
               {isSubmitting ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : member ? (

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import type { Envelope } from "@/api/types"
 import type { ErrorToastPayload } from "@/api/errors"
 import { toErrorToastPayload } from "@/api/errors"
-import { paymentsApi } from "../api/paymentsApi"
+import { paymentsApi, type ListPaymentsFilters } from "../api/paymentsApi"
 import type { CreatePaymentInput, PaymentDto, UpdatePaymentInput } from "../types/payment"
 
 interface PaymentsState {
@@ -17,9 +17,9 @@ const initialState: PaymentsState = {
   error: null,
 }
 
-export const fetchPayments = createAsyncThunk<Envelope<PaymentDto[]>, string>(
+export const fetchPayments = createAsyncThunk<Envelope<PaymentDto[]>, ListPaymentsFilters>(
   "payments/fetchPayments",
-  (contributionId) => paymentsApi.listPayments(contributionId)
+  (filters) => paymentsApi.listPayments(filters)
 )
 
 export const createPayment = createAsyncThunk<

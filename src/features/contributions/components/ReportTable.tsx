@@ -1,4 +1,12 @@
+import { Eye, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { cn } from "cn"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -25,7 +33,81 @@ function balanceColor(balance: string): string {
   return "text-muted-foreground"
 }
 
-export default function ReportTable({ report }: { report: ContributionReportResponse }) {
+interface MemberReportActionsMenuProps {
+  memberId: string
+  name: string
+  canAssign: boolean
+  canRecordPayment: boolean
+  onEditAssignment: (memberId: string) => void
+  onAddPayment: (memberId: string) => void
+  onRemoveAssignment: (memberId: string) => void
+  onViewDetails: (memberId: string) => void
+}
+
+function MemberReportActionsMenu({
+  memberId,
+  name,
+  canAssign,
+  canRecordPayment,
+  onEditAssignment,
+  onAddPayment,
+  onRemoveAssignment,
+  onViewDetails,
+}: MemberReportActionsMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${name}`}>
+          <MoreVertical className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {canRecordPayment ? (
+          <DropdownMenuItem onClick={() => onAddPayment(memberId)}>
+            <Plus className="size-4" />
+            Add Payment
+          </DropdownMenuItem>
+        ) : null}
+        {canAssign ? (
+          <DropdownMenuItem onClick={() => onEditAssignment(memberId)}>
+            <Pencil className="size-4" />
+            Edit Assignment
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem onClick={() => onViewDetails(memberId)}>
+          <Eye className="size-4" />
+          View Details
+        </DropdownMenuItem>
+        {canAssign ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onRemoveAssignment(memberId)}>
+            <Trash2 className="size-4" />
+            Remove Assignment
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+interface ReportTableProps {
+  report: ContributionReportResponse
+  canAssign: boolean
+  canRecordPayment: boolean
+  onEditAssignment: (memberId: string) => void
+  onAddPayment: (memberId: string) => void
+  onRemoveAssignment: (memberId: string) => void
+  onViewDetails: (memberId: string) => void
+}
+
+export default function ReportTable({
+  report,
+  canAssign,
+  canRecordPayment,
+  onEditAssignment,
+  onAddPayment,
+  onRemoveAssignment,
+  onViewDetails,
+}: ReportTableProps) {
   const isTargeted = report.contribution.type === "TARGETED"
 
   if (report.members.length === 0) {
@@ -42,6 +124,7 @@ export default function ReportTable({ report }: { report: ContributionReportResp
             <TableHead className="text-right">Required</TableHead>
             <TableHead className="text-right">Paid</TableHead>
             <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="w-12" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -52,6 +135,18 @@ export default function ReportTable({ report }: { report: ContributionReportResp
               <TableCell className="text-right">{formatMoney(member.paid)}</TableCell>
               <TableCell className={cn("text-right font-medium", balanceColor(member.balance))}>
                 {formatMoney(member.balance)}
+              </TableCell>
+              <TableCell className="text-right">
+                <MemberReportActionsMenu
+                  memberId={member.memberId}
+                  name={member.name}
+                  canAssign={canAssign}
+                  canRecordPayment={canRecordPayment}
+                  onEditAssignment={onEditAssignment}
+                  onAddPayment={onAddPayment}
+                  onRemoveAssignment={onRemoveAssignment}
+                  onViewDetails={onViewDetails}
+                />
               </TableCell>
             </TableRow>
           ))}
@@ -67,6 +162,7 @@ export default function ReportTable({ report }: { report: ContributionReportResp
         <TableRow>
           <TableHead>Member</TableHead>
           <TableHead className="text-right">Total Paid</TableHead>
+          <TableHead className="w-12" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -74,6 +170,18 @@ export default function ReportTable({ report }: { report: ContributionReportResp
           <TableRow key={member.memberId}>
             <TableCell className="font-medium">{member.name}</TableCell>
             <TableCell className="text-right">{formatMoney(member.totalPaid)}</TableCell>
+            <TableCell className="text-right">
+              <MemberReportActionsMenu
+                memberId={member.memberId}
+                name={member.name}
+                canAssign={canAssign}
+                canRecordPayment={canRecordPayment}
+                onEditAssignment={onEditAssignment}
+                onAddPayment={onAddPayment}
+                onRemoveAssignment={onRemoveAssignment}
+                onViewDetails={onViewDetails}
+              />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

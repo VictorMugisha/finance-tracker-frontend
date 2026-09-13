@@ -6,13 +6,7 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { formatMoney } from "@/utils/format"
 import ContributionFormDialog from "./components/ContributionFormDialog"
@@ -123,32 +117,30 @@ export default function ContributionsPage() {
             className="sm:max-w-xs"
           />
           <div className="flex gap-2">
-            <Select
+            <SearchableSelectDropdown
+              options={[
+                { value: "all", label: "All types" },
+                { value: "TARGETED", label: "Targeted" },
+                { value: "OPEN", label: "Open" },
+              ]}
               value={type}
-              onValueChange={(value) => setType(value as ContributionType | "all")}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="TARGETED">Targeted</SelectItem>
-                <SelectItem value="OPEN">Open</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
+              onChange={(value) => setType(value as ContributionType | "all")}
+              triggerClassName="w-36"
+              searchPlaceholder="Search..."
+              emptyMessage="No results found."
+            />
+            <SearchableSelectDropdown
+              options={[
+                { value: "all", label: "All statuses" },
+                { value: "OPEN", label: "Open" },
+                { value: "CLOSED", label: "Closed" },
+              ]}
               value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as ContributionStatus | "all")}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="OPEN">Open</SelectItem>
-                <SelectItem value="CLOSED">Closed</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => setStatusFilter(value as ContributionStatus | "all")}
+              triggerClassName="w-36"
+              searchPlaceholder="Search..."
+              emptyMessage="No results found."
+            />
           </div>
         </div>
 

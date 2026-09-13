@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { NumericInput } from "@/components/shared/NumericInput"
 import MemberSelect from "@/features/members/components/MemberSelect"
 import type { AssignmentDto } from "../types/assignment"
 
@@ -74,13 +74,12 @@ export default function AssignmentFormDialog({
           )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="assignment-amount">Required amount</Label>
-            <Input
+            <NumericInput
               id="assignment-amount"
-              inputMode="decimal"
               value={requiredAmount}
-              onChange={(event) => setRequiredAmount(event.target.value)}
+              onChange={setRequiredAmount}
               placeholder="500"
-              required
+              decimals={2}
             />
           </div>
           <DialogFooter>

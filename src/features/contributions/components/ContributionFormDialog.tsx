@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
+import { format } from "date-fns"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,13 +13,9 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { DatePicker } from "@/components/shared/DatePicker"
+import { NumericInput } from "@/components/shared/NumericInput"
+import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import { Textarea } from "@/components/ui/textarea"
 import type {
   ContributionDto,
@@ -43,8 +40,8 @@ export default function ContributionFormDialog({
   const [description, setDescription] = useState(contribution?.description ?? "")
   const [type, setType] = useState<ContributionType>(contribution?.type ?? "TARGETED")
   const [targetAmount, setTargetAmount] = useState(contribution?.targetAmount ?? "")
-  const [deadline, setDeadline] = useState(
-    contribution?.deadline ? contribution.deadline.slice(0, 10) : ""
+  const [deadline, setDeadline] = useState<Date | undefined>(
+    contribution?.deadline ? new Date(contribution.deadline) : undefined
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -58,7 +55,7 @@ export default function ContributionFormDialog({
       description: description.trim() || null,
       type,
       targetAmount: type === "TARGETED" ? targetAmount.trim() || null : null,
-      deadline: deadline ? `${deadline}T00:00:00.000Z` : null,
+      deadline: deadline ? `${format(deadline, "yyyy-MM-dd")}T00:00:00.000Z` : null,
     })
     setIsSubmitting(false)
     if (ok) {
@@ -97,41 +94,33 @@ export default function ContributionFormDialog({
           </div>
           <div className="flex flex-col gap-2">
             <Label>Type</Label>
-            <Select
+            <SearchableSelectDropdown
+              options={[
+                { value: "TARGETED", label: "Targeted" },
+                { value: "OPEN", label: "Open" },
+              ]}
               value={type}
-              onValueChange={(value) => setType(value as ContributionType)}
+              onChange={(value) => setType(value as ContributionType)}
               disabled={isEdit}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TARGETED">Targeted</SelectItem>
-                <SelectItem value="OPEN">Open</SelectItem>
-              </SelectContent>
-            </Select>
+              searchPlaceholder="Search..."
+              emptyMessage="No results found."
+            />
           </div>
           {type === "TARGETED" ? (
             <div className="flex flex-col gap-2">
               <Label htmlFor="contribution-target">Target amount</Label>
-              <Input
+              <NumericInput
                 id="contribution-target"
-                inputMode="decimal"
                 value={targetAmount}
-                onChange={(event) => setTargetAmount(event.target.value)}
+                onChange={setTargetAmount}
                 placeholder="1000"
-                required
+                decimals={2}
               />
             </div>
           ) : null}
           <div className="flex flex-col gap-2">
             <Label htmlFor="contribution-deadline">Deadline (optional)</Label>
-            <Input
-              id="contribution-deadline"
-              type="date"
-              value={deadline}
-              onChange={(event) => setDeadline(event.target.value)}
-            />
+            <DatePicker id="contribution-deadline" value={deadline} onChange={setDeadline} />
           </div>
           <DialogFooter>
             <Button

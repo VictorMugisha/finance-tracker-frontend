@@ -1,14 +1,17 @@
 import { useState } from "react"
-import { ArrowLeft, Loader2, Lock } from "lucide-react"
+import { ArrowLeft, Loader2, Lock, Plus } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import AssignmentsTab from "@/features/assignments/components/AssignmentsTab"
-import PaymentsTab from "@/features/payments/components/PaymentsTab"
-import { useAuth } from "@/features/auth/hooks/useAuth"
 import { cn } from "cn"
+import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useAssignments } from "@/features/assignments/hooks/useAssignments"
+import type { AssignmentDto } from "@/features/assignments/types/assignment"
+import AssignmentFormDialog from "@/features/assignments/components/AssignmentFormDialog"
+import { usePaymentActions } from "@/features/payments/hooks/usePayments"
+import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
+import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
 import { formatMoney } from "@/utils/format"
 import ReportTable from "./components/ReportTable"
 import { useContributionDetail } from "./hooks/useContributionDetail"
@@ -18,9 +21,23 @@ export default function ContributionDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { contribution, report, status, refresh, close } = useContributionDetail(id)
-  const [closeOpen, setCloseOpen] = useState(false)
+  const {
+    items: assignments,
+    create: createAssignment,
+    update: updateAssignment,
+    remove: removeAssignment,
+  } = useAssignments(id)
+  const { create: createPayment } = usePaymentActions()
 
-  const canUpdate = user ? user.isAdmin || user.permissions.includes("contributions:update") : false
+  const [closeOpen, setCloseOpen] = useState(false)
+  const [assignmentOpen, setAssignmentOpen] = useState(false)
+  const [editingAssignment, setEditingAssignment] = useState<AssignmentDto | null>(null)
+  const [paymentOpen, setPaymentOpen] = useState(false)
+  const [paymentMember, setPaymentMember] = useState<{ id: string; name: string } | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<AssignmentDto | null>(null)
+
+  const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
+  const canUpdate = has("contributions:update")
 
   if (status === "loading" || status === "idle") {
     return (
@@ -45,6 +62,78 @@ export default function ContributionDetailPage() {
   }
 
   const isTargeted = contribution.type === "TARGETED"
+  const isOpen = contribution.status === "OPEN"
+  const canAssign = isTargeted && isOpen && has("assignments:write")
+  const canRecordPayment = isOpen && has("payments:record")
+
+  const memberName = (memberId: string): string =>
+    report?.members.find((member) => member.memberId === memberId)?.name ?? ""
+
+  const findAssignment = (memberId: string): AssignmentDto | undefined =>
+    assignments.find((assignment) => assignment.memberId === memberId)
+
+  const openAddAssignment = () => {
+    setEditingAssignment(null)
+    setAssignmentOpen(true)
+  }
+
+  const openEditAssignment = (memberId: string) => {
+    const assignment = findAssignment(memberId)
+    if (!assignment) return
+    setEditingAssignment(assignment)
+    setAssignmentOpen(true)
+  }
+
+  const openRemoveAssignment = (memberId: string) => {
+    const assignment = findAssignment(memberId)
+    if (!assignment) return
+    setRemoveTarget(assignment)
+  }
+
+  const openAddPayment = (memberId?: string) => {
+    setPaymentMember(memberId ? { id: memberId, name: memberName(memberId) } : null)
+    setPaymentOpen(true)
+  }
+
+  const viewDetails = (memberId: string) => {
+    navigate(`/contributions/${contribution.id}/members/${memberId}`)
+  }
+
+  const handleAssignmentSubmit = async (input: {
+    memberId: string
+    requiredAmount: string
+  }): Promise<boolean> => {
+    const ok = editingAssignment
+      ? await updateAssignment(editingAssignment.id, { requiredAmount: input.requiredAmount })
+      : await createAssignment(input)
+    if (ok) {
+      refresh()
+    }
+    return ok
+  }
+
+  const handlePaymentSubmit = async (input: PaymentFormSubmitInput): Promise<boolean> => {
+    const ok = await createPayment({
+      contributionId: contribution.id,
+      memberId: input.memberId,
+      amount: input.amount,
+      note: input.note,
+      paidAt: input.paidAt,
+    })
+    if (ok) {
+      refresh()
+    }
+    return ok
+  }
+
+  const handleRemoveAssignment = async (): Promise<boolean> => {
+    if (!removeTarget) return false
+    const ok = await removeAssignment(removeTarget.id)
+    if (ok) {
+      refresh()
+    }
+    return ok
+  }
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -86,7 +175,7 @@ export default function ContributionDetailPage() {
               <p className="mt-1 text-sm text-muted-foreground">{contribution.description}</p>
             ) : null}
           </div>
-          {canUpdate && contribution.status === "OPEN" ? (
+          {canUpdate && isOpen ? (
             <Button variant="outline" onClick={() => setCloseOpen(true)}>
               <Lock className="size-4" />
               Close
@@ -117,26 +206,61 @@ export default function ContributionDetailPage() {
           ) : null}
         </div>
 
-        <Tabs defaultValue="report">
-          <TabsList>
-            <TabsTrigger value="report">Report</TabsTrigger>
-            {isTargeted ? <TabsTrigger value="assignments">Assignments</TabsTrigger> : null}
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-          </TabsList>
-          <TabsContent value="report">
-            {report ? <ReportTable report={report} /> : null}
-          </TabsContent>
-          {isTargeted ? (
-            <TabsContent value="assignments">
-              <AssignmentsTab contributionId={contribution.id} onChanged={refresh} />
-            </TabsContent>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {canAssign ? (
+            <Button onClick={openAddAssignment}>
+              <Plus className="size-4" />
+              Add Assignment
+            </Button>
           ) : null}
-          <TabsContent value="payments">
-            <PaymentsTab contributionId={contribution.id} onChanged={refresh} />
-          </TabsContent>
-        </Tabs>
+          {canRecordPayment ? (
+            <Button onClick={() => openAddPayment()} variant="outline">
+              <Plus className="size-4" />
+              Record Payment
+            </Button>
+          ) : null}
+        </div>
+
+        {report ? (
+          <ReportTable
+            report={report}
+            canAssign={canAssign}
+            canRecordPayment={canRecordPayment}
+            onEditAssignment={openEditAssignment}
+            onAddPayment={openAddPayment}
+            onRemoveAssignment={openRemoveAssignment}
+            onViewDetails={viewDetails}
+          />
+        ) : null}
       </main>
 
+      <AssignmentFormDialog
+        key={editingAssignment?.id ?? "new"}
+        open={assignmentOpen}
+        onOpenChange={setAssignmentOpen}
+        assignment={editingAssignment}
+        onSubmit={handleAssignmentSubmit}
+      />
+      <PaymentFormDialog
+        key={paymentMember?.id ?? "new"}
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        payment={null}
+        member={paymentMember}
+        onSubmit={handlePaymentSubmit}
+      />
+      <ConfirmDialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRemoveTarget(null)
+          }
+        }}
+        title="Remove assignment?"
+        description={`Remove the assignment for ${removeTarget?.memberName ?? "this member"}?`}
+        confirmLabel="Remove"
+        onConfirm={handleRemoveAssignment}
+      />
       <ConfirmDialog
         open={closeOpen}
         onOpenChange={setCloseOpen}

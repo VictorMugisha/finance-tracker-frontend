@@ -15,7 +15,7 @@ export default function AuthPage() {
   }
 
   if (status === "authenticated") {
-    return <Navigate to="/members" replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   return (
