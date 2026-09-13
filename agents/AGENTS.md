@@ -26,13 +26,13 @@ covers both repos.
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
+| Layer    | Choice                                                             |
+| -------- | ------------------------------------------------------------------ |
 | Frontend | Vite 8, React 19, TypeScript 6, Tailwind CSS v4, shadcn/ui (radix) |
-| Backend | Node.js, Express 5, TypeScript 5, ESM (`"type": "module"`) |
-| Database | PostgreSQL (local, no Docker) |
-| ORM | Prisma 7 (driver adapter `@prisma/adapter-pg`) |
-| Auth | JWT bearer token (localStorage) — not yet implemented |
+| Backend  | Node.js, Express 5, TypeScript 5, ESM (`"type": "module"`)         |
+| Database | PostgreSQL (local, no Docker)                                      |
+| ORM      | Prisma 7 (driver adapter `@prisma/adapter-pg`)                     |
+| Auth     | JWT bearer token (localStorage) — not yet implemented              |
 
 ## Prerequisites
 
@@ -44,26 +44,26 @@ covers both repos.
 
 ### Frontend (`finance-tracker-frontend/`)
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start Vite dev server (proxies `/api` → `http://localhost:4000`) |
-| `npm run build` | Type-check (`tsc -b`) + production build |
-| `npm run lint` | oxlint |
-| `npm run preview` | Preview production build |
-| `npx shadcn@latest add <component>` | Add a shadcn/ui component |
+| Command                             | Purpose                                                          |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `npm run dev`                       | Start Vite dev server (proxies `/api` → `http://localhost:4000`) |
+| `npm run build`                     | Type-check (`tsc -b`) + production build                         |
+| `npm run lint`                      | oxlint                                                           |
+| `npm run preview`                   | Preview production build                                         |
+| `npx shadcn@latest add <component>` | Add a shadcn/ui component                                        |
 
 ### Backend (`finance-tracker-backend/`)
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start dev server with hot reload (tsx watch) on port 4000 |
-| `npm run build` | Compile TS to `dist/` |
-| `npm run start` | Run compiled output (`node dist/index.js`) |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run prisma:migrate` | `prisma migrate dev` |
-| `npm run prisma:generate` | `prisma generate` |
-| `npm run prisma:seed` | `prisma db seed` |
-| `npm run prisma:studio` | `prisma studio` |
+| Command                   | Purpose                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| `npm run dev`             | Start dev server with hot reload (tsx watch) on port 4000 |
+| `npm run build`           | Compile TS to `dist/`                                     |
+| `npm run start`           | Run compiled output (`node dist/index.js`)                |
+| `npm run typecheck`       | `tsc --noEmit`                                            |
+| `npm run prisma:migrate`  | `prisma migrate dev`                                      |
+| `npm run prisma:generate` | `prisma generate`                                         |
+| `npm run prisma:seed`     | `prisma db seed`                                          |
+| `npm run prisma:studio`   | `prisma studio`                                           |
 
 ## Local database
 
