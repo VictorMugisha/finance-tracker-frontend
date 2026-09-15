@@ -1,15 +1,13 @@
 import { useState } from "react"
-import { Loader2, Plus, TrendingUp } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
-import { formatMoney } from "@/utils/format"
 import ContributionFormDialog from "./components/ContributionFormDialog"
 import ContributionsList from "./components/ContributionsList"
 import { useContributions } from "./hooks/useContributions"
@@ -27,7 +25,6 @@ export default function ContributionsPage() {
     items,
     status,
     error,
-    balance,
     search,
     setSearch,
     type,
@@ -46,7 +43,6 @@ export default function ContributionsPage() {
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canCreate = has("contributions:create")
   const canWrite = has("contributions:update")
-  const canViewReports = has("reports:view")
 
   const openCreate = () => {
     setEditing(null)
@@ -85,32 +81,6 @@ export default function ContributionsPage() {
             </Button>
           ) : null}
         </div>
-
-        {canViewReports && balance ? (
-          <Card className="mb-4">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-base">Group balance</CardTitle>
-                <CardDescription>Total collected minus total disbursed</CardDescription>
-              </div>
-              <TrendingUp className="size-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-x-8 gap-y-2">
-              <div>
-                <p className="text-2xl font-semibold">{formatMoney(balance.balance)}</p>
-                <p className="text-xs text-muted-foreground">Balance</p>
-              </div>
-              <div>
-                <p className="text-lg font-medium">{formatMoney(balance.totalCollected)}</p>
-                <p className="text-xs text-muted-foreground">Collected</p>
-              </div>
-              <div>
-                <p className="text-lg font-medium">{formatMoney(balance.totalDisbursed)}</p>
-                <p className="text-xs text-muted-foreground">Disbursed</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
 
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <Input

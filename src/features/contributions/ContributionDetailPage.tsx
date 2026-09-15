@@ -17,6 +17,25 @@ import { formatMoney } from "@/utils/format"
 import ReportTable from "./components/ReportTable"
 import { useContributionDetail } from "./hooks/useContributionDetail"
 
+function SummaryCard({
+  label,
+  value,
+  emphasized = false,
+}: {
+  label: string
+  value: string
+  emphasized?: boolean
+}) {
+  return (
+    <div className={cn("rounded-lg border p-4", emphasized && "border-primary bg-primary/10")}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn("text-lg font-semibold", emphasized && "text-primary")}>
+        {formatMoney(value)}
+      </p>
+    </div>
+  )
+}
+
 export default function ContributionDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
@@ -189,27 +208,19 @@ export default function ContributionDetailPage() {
           ) : null}
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Collected</p>
-            <p className="text-lg font-semibold">{formatMoney(contribution.totalCollected)}</p>
-          </div>
+        <div
+          className={cn(
+            "mb-4 grid grid-cols-2 gap-3",
+            isTargeted ? "sm:grid-cols-5" : "sm:grid-cols-3"
+          )}
+        >
           {isTargeted ? (
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Required</p>
-              <p className="text-lg font-semibold">{formatMoney(contribution.totalRequired)}</p>
-            </div>
+            <SummaryCard label="Target" value={contribution.targetAmount ?? "0"} />
           ) : null}
-          <div className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">Net</p>
-            <p className="text-lg font-semibold">{formatMoney(contribution.net)}</p>
-          </div>
-          {isTargeted && contribution.targetAmount ? (
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Target</p>
-              <p className="text-lg font-semibold">{formatMoney(contribution.targetAmount)}</p>
-            </div>
-          ) : null}
+          <SummaryCard label="Collected" value={contribution.totalCollected} />
+          {isTargeted ? <SummaryCard label="Expected" value={contribution.totalRequired} /> : null}
+          <SummaryCard label="Disbursed" value={contribution.totalDisbursed} />
+          <SummaryCard label="Net" value={contribution.net} emphasized />
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">

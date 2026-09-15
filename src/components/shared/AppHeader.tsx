@@ -10,6 +10,7 @@ import ThemeToggle from "./ThemeToggle"
 const NAV_LINKS = [
   { to: "/members", label: "Members" },
   { to: "/contributions", label: "Contributions" },
+  { to: "/expenses", label: "Expenses" },
 ]
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>

@@ -12,6 +12,7 @@ export interface ContributionDto {
   createdAt: string
   totalCollected: string
   totalRequired: string
+  totalDisbursed: string
   net: string
 }
 

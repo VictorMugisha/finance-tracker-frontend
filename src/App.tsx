@@ -6,6 +6,7 @@ import ContributionDetailPage from "@/features/contributions/ContributionDetailP
 import ContributionsPage from "@/features/contributions/ContributionsPage"
 import MemberContributionDetailPage from "@/features/contributions/MemberContributionDetailPage"
 import DashboardPage from "@/features/dashboard/DashboardPage"
+import ExpensesPage from "@/features/expenses/ExpensesPage"
 import MembersPage from "@/features/members/MembersPage"
 
 export default function App() {
@@ -50,6 +51,14 @@ export default function App() {
           element={
             <ProtectedRoute permission="contributions:read">
               <MemberContributionDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute permission="expenses:read">
+              <ExpensesPage />
             </ProtectedRoute>
           }
         />
