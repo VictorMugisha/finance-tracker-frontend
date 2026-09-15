@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import UserFormDialog from "@/features/users/components/UserFormDialog"
+import type { UserFormSubmitInput } from "@/features/users/components/UserFormDialog"
+import { useUserActions } from "@/features/users/hooks/useUsers"
 import MemberFormDialog from "./components/MemberFormDialog"
 import MemberList from "./components/MemberList"
 import { useMembers } from "./hooks/useMembers"
@@ -13,23 +16,35 @@ import type { CreateMemberInput, MemberDto } from "./types/member"
 
 export default function MembersPage() {
   const { user } = useAuth()
-  const { members, status, error, search, setSearch, create, update, deactivate } = useMembers()
+  const { members, status, error, search, setSearch, refresh, create, update, deactivate } =
+    useMembers()
+  const { create: createUser } = useUserActions()
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<MemberDto | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<MemberDto | null>(null)
-  const { key: memberFormKey, remount: remountMemberForm } = useRemountKey()
+  const { key: formKey, remount: remountForm } = useRemountKey()
+
+  const [userFormOpen, setUserFormOpen] = useState(false)
+  const [presetMember, setPresetMember] = useState<{
+    id: string
+    name: string
+    phone: string | null
+  } | null>(null)
+  const { key: userFormKey, remount: remountUserForm } = useRemountKey()
 
   const canWrite = user ? user.isAdmin || user.permissions.includes("members:write") : false
+  const canManageUsers = user ? user.isAdmin || user.permissions.includes("users:write") : false
 
   const openCreate = () => {
     setEditing(null)
-    remountMemberForm()
+    remountForm()
     setFormOpen(true)
   }
 
   const openEdit = (member: MemberDto) => {
     setEditing(member)
-    remountMemberForm()
+    remountForm()
     setFormOpen(true)
   }
 
@@ -50,6 +65,28 @@ export default function MembersPage() {
       return false
     }
     return deactivate(confirmTarget.id)
+  }
+
+  const openCreateUser = (member: MemberDto) => {
+    setPresetMember({ id: member.id, name: member.name, phone: member.phone })
+    remountUserForm()
+    setUserFormOpen(true)
+  }
+
+  const handleCreateUser = async (input: UserFormSubmitInput) => {
+    if (!input.password) {
+      return false
+    }
+    const ok = await createUser({
+      name: input.name,
+      phone: input.phone,
+      memberId: input.memberId,
+      password: input.password,
+    })
+    if (ok) {
+      refresh()
+    }
+    return ok
   }
 
   return (
@@ -84,15 +121,24 @@ export default function MembersPage() {
             canWrite={canWrite}
             onEdit={openEdit}
             onToggleActive={handleToggleActive}
+            onCreateUser={canManageUsers ? openCreateUser : undefined}
           />
         )}
       </main>
       <MemberFormDialog
-        key={memberFormKey}
+        key={formKey}
         open={formOpen}
         onOpenChange={setFormOpen}
         member={editing}
         onSubmit={handleSubmit}
+      />
+      <UserFormDialog
+        key={userFormKey}
+        open={userFormOpen}
+        onOpenChange={setUserFormOpen}
+        user={null}
+        presetMember={presetMember}
+        onSubmit={handleCreateUser}
       />
       <ConfirmDialog
         open={confirmTarget !== null}

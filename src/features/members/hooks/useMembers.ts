@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { formatErrorToast, formatToastMessage } from "@/api/errors"
 import { useAppDispatch, useAppSelector } from "@/hooks/redux"
@@ -15,6 +15,10 @@ export function useMembers() {
   const debouncedSearch = useDebounce(search, 500)
 
   useEffect(() => {
+    void dispatch(fetchMembers(debouncedSearch.trim() || undefined))
+  }, [dispatch, debouncedSearch])
+
+  const refresh = useCallback(() => {
     void dispatch(fetchMembers(debouncedSearch.trim() || undefined))
   }, [dispatch, debouncedSearch])
 
@@ -57,6 +61,7 @@ export function useMembers() {
     error,
     search,
     setSearch,
+    refresh,
     create,
     update,
     deactivate,

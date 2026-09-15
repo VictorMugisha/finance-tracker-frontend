@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { to: "/members", label: "Members" },
   { to: "/contributions", label: "Contributions" },
   { to: "/expenses", label: "Expenses" },
+  { to: "/users", label: "Users" },
 ]
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>

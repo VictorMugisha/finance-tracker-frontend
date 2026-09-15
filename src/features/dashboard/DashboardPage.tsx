@@ -7,6 +7,7 @@ import {
   Plus,
   Receipt,
   UserCheck,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react"
@@ -186,6 +187,17 @@ export default function DashboardPage() {
                 <div>
                   <p className="font-medium">Expenses</p>
                   <p className="text-sm text-muted-foreground">Track group spending</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/users" className="group">
+            <Card className="transition-colors group-hover:bg-muted">
+              <CardContent className="flex items-center gap-3 p-4">
+                <UserCog className="size-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Users</p>
+                  <p className="text-sm text-muted-foreground">Accounts and permissions</p>
                 </div>
               </CardContent>
             </Card>

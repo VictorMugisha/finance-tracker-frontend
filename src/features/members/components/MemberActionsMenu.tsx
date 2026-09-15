@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, RotateCcw, Trash2 } from "lucide-react"
+import { MoreVertical, Pencil, RotateCcw, Trash2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,12 +12,14 @@ interface MemberActionsMenuProps {
   member: MemberDto
   onEdit: (member: MemberDto) => void
   onToggleActive: (member: MemberDto) => void
+  onCreateUser?: (member: MemberDto) => void
 }
 
 export default function MemberActionsMenu({
   member,
   onEdit,
   onToggleActive,
+  onCreateUser,
 }: MemberActionsMenuProps) {
   return (
     <DropdownMenu>
@@ -31,6 +33,12 @@ export default function MemberActionsMenu({
           <Pencil className="size-4" />
           Edit
         </DropdownMenuItem>
+        {onCreateUser && member.user === null ? (
+          <DropdownMenuItem onClick={() => onCreateUser(member)}>
+            <UserPlus className="size-4" />
+            Create user
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={() => onToggleActive(member)}>
           {member.isActive ? <Trash2 className="size-4" /> : <RotateCcw className="size-4" />}
           {member.isActive ? "Deactivate" : "Activate"}
