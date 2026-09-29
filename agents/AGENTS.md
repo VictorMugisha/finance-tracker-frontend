@@ -131,8 +131,9 @@ psql -d postgres -c "CREATE DATABASE finance_tracker_db OWNER victor;"
   `requirePermission("key")` and `requireAdmin` guard routes. Permission keys are
   string constants (see `prisma/seed.ts`).
 - Entrypoint `src/index.ts` mounts routers under `/auth`, `/members`,
-  `/contributions`, `/contributions/:contributionId/assignments`, `/payments`,
-  `/expenses`, `/stats`, `/users`, `/permissions`, plus `/health`.
+  `/contributions`, `/contributions/:contributionId/assignments`,
+  `/recurring-contributions`, `/payments`, `/expenses`, `/stats`, `/users`,
+  `/permissions`, plus `/health`.
 
 ## Swagger (backend)
 
@@ -158,8 +159,23 @@ psql -d postgres -c "CREATE DATABASE finance_tracker_db OWNER victor;"
 - Do not commit `.env`. `.env.example` documents required variables.
 - `Member` (data, never logs in) and `User` (login account) are strictly separate.
 
+## Domain concepts (non-obvious)
+
+- **There is no `Tier` entity.** A "tier" is ephemeral — "Assign multiple" on a
+  TARGETED contribution is a bulk upsert of `requiredAmount` for a set of selected
+  members. Do not reintroduce a persisted/global tier model or link tiers to members.
+- **Recurring contributions** are a parent `RecurringContribution` plus per-period
+  `Contribution` rows (`recurringContributionId`, `recurringPeriod`, `periodLabel`).
+  Each period is a normal TARGETED contribution. `targetAmount` on the recurring is
+  the **per-period** target (there is no grand total). Rollover creates the next
+  period and copies the latest period's assignments, skipping inactive members.
+  `GET /contributions` excludes recurring periods (`recurringContributionId: null`);
+  periods are only reachable inside the recurring's detail page.
+- The `Outstanding` stat on a contribution = `target − disbursed` (not
+  `target − collected`, since collected may legitimately exceed the target).
+
 ## Status
 
-Fully implemented: auth, members, users, contributions, assignments, payments,
-expenses, permissions, stats (dashboard) on both backend and frontend. No test
-suite and no CI are configured in either repo.
+Fully implemented: auth, members, users, contributions, recurring contributions,
+assignments, payments, expenses, permissions, stats (dashboard) on both backend
+and frontend. No test suite and no CI are configured in either repo.
