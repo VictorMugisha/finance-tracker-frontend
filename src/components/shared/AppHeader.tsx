@@ -10,6 +10,7 @@ import ThemeToggle from "./ThemeToggle"
 const NAV_LINKS = [
   { to: "/members", label: "Members" },
   { to: "/contributions", label: "Contributions" },
+  { to: "/recurring-contributions", label: "Recurring" },
   { to: "/expenses", label: "Expenses" },
   { to: "/users", label: "Users" },
 ]

@@ -5,6 +5,8 @@ import AuthPage from "@/features/auth/AuthPage"
 import ContributionDetailPage from "@/features/contributions/ContributionDetailPage"
 import ContributionsPage from "@/features/contributions/ContributionsPage"
 import MemberContributionDetailPage from "@/features/contributions/MemberContributionDetailPage"
+import RecurringContributionDetailPage from "@/features/recurring-contributions/RecurringContributionDetailPage"
+import RecurringContributionsPage from "@/features/recurring-contributions/RecurringContributionsPage"
 import DashboardPage from "@/features/dashboard/DashboardPage"
 import ExpensesPage from "@/features/expenses/ExpensesPage"
 import MembersPage from "@/features/members/MembersPage"
@@ -52,6 +54,22 @@ export default function App() {
           element={
             <ProtectedRoute permission="contributions:read">
               <MemberContributionDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recurring-contributions"
+          element={
+            <ProtectedRoute permission="contributions:read">
+              <RecurringContributionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recurring-contributions/:id"
+          element={
+            <ProtectedRoute permission="contributions:read">
+              <RecurringContributionDetailPage />
             </ProtectedRoute>
           }
         />

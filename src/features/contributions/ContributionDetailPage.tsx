@@ -185,11 +185,17 @@ export default function ContributionDetailPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 p-4">
         <button
           type="button"
-          onClick={() => navigate("/contributions")}
+          onClick={() =>
+            contribution.recurringContributionId
+              ? navigate(`/recurring-contributions/${contribution.recurringContributionId}`)
+              : navigate("/contributions")
+          }
           className="mb-4 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back to contributions
+          {contribution.recurringContributionId
+            ? "Back to recurring contribution"
+            : "Back to contributions"}
         </button>
 
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -215,6 +221,11 @@ export default function ContributionDetailPage() {
                 {contribution.status}
               </span>
             </div>
+            {contribution.periodLabel ? (
+              <p className="mt-1 text-sm font-medium text-muted-foreground">
+                {contribution.periodLabel}
+              </p>
+            ) : null}
             {contribution.description ? (
               <p className="mt-1 text-sm text-muted-foreground">{contribution.description}</p>
             ) : null}
@@ -232,18 +243,16 @@ export default function ContributionDetailPage() {
           ) : null}
         </div>
 
-        <div
-          className={cn(
-            "mb-4 grid grid-cols-2 gap-3",
-            isTargeted ? "sm:grid-cols-5" : "sm:grid-cols-3"
-          )}
-        >
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {isTargeted ? (
             <SummaryCard label="Target" value={contribution.targetAmount ?? "0"} />
           ) : null}
           <SummaryCard label="Collected" value={contribution.totalCollected} />
           {isTargeted ? <SummaryCard label="Expected" value={contribution.totalRequired} /> : null}
           <SummaryCard label="Disbursed" value={contribution.totalDisbursed} />
+          {isTargeted ? (
+            <SummaryCard label="Outstanding" value={contribution.outstanding ?? "0"} />
+          ) : null}
           <SummaryCard label="Net" value={contribution.net} emphasized />
         </div>
 

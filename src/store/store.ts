@@ -6,6 +6,7 @@ import expensesReducer from "@/features/expenses/slice/expensesSlice"
 import membersReducer from "@/features/members/slice/membersSlice"
 import paymentsReducer from "@/features/payments/slice/paymentsSlice"
 import permissionsReducer from "@/features/permissions/slice/permissionsSlice"
+import recurringReducer from "@/features/recurring-contributions/slice/recurringSlice"
 import statsReducer from "@/features/stats/slice/statsSlice"
 import usersReducer from "@/features/users/slice/usersSlice"
 
@@ -20,6 +21,7 @@ export const store = configureStore({
     stats: statsReducer,
     users: usersReducer,
     permissions: permissionsReducer,
+    recurring: recurringReducer,
   },
 })
 
