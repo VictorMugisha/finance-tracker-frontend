@@ -6,6 +6,7 @@ import {
   closeContribution,
   fetchContributionDetail,
   fetchReport,
+  reopenContribution,
   resetDetail,
 } from "../slice/contributionsSlice"
 
@@ -37,5 +38,16 @@ export function useContributionDetail(id: string) {
     }
   }, [dispatch, id])
 
-  return { contribution, report, status, refresh, close }
+  const reopen = useCallback(async (): Promise<boolean> => {
+    try {
+      const envelope = await dispatch(reopenContribution(id)).unwrap()
+      toast.success(formatToastMessage(envelope.statusCode, envelope.message))
+      return true
+    } catch (err) {
+      toast.error(formatErrorToast(err))
+      return false
+    }
+  }, [dispatch, id])
+
+  return { contribution, report, status, refresh, close, reopen }
 }

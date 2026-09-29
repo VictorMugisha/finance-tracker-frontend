@@ -1,6 +1,8 @@
 import { api } from "@/api/api"
 import type { Envelope } from "@/api/types"
 import type {
+  AssignBulkInput,
+  AssignBulkResult,
   AssignmentDto,
   CreateAssignmentInput,
   UpdateAssignmentInput,
@@ -46,9 +48,21 @@ async function removeAssignment(
   return res.data
 }
 
+async function assignBulk(
+  contributionId: string,
+  input: AssignBulkInput
+): Promise<Envelope<AssignBulkResult>> {
+  const res = await api.post<Envelope<AssignBulkResult>>(
+    `/contributions/${contributionId}/assign-bulk`,
+    input
+  )
+  return res.data
+}
+
 export const assignmentsApi = {
   listAssignments,
   createAssignment,
   updateAssignment,
   removeAssignment,
+  assignBulk,
 }

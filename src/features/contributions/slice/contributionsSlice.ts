@@ -88,6 +88,18 @@ export const closeContribution = createAsyncThunk<
   }
 })
 
+export const reopenContribution = createAsyncThunk<
+  Envelope<ContributionDto>,
+  string,
+  { rejectValue: ErrorToastPayload }
+>("contributions/reopenContribution", async (id, { rejectWithValue }) => {
+  try {
+    return await contributionsApi.reopenContribution(id)
+  } catch (error) {
+    return rejectWithValue(toErrorToastPayload(error))
+  }
+})
+
 const contributionsSlice = createSlice({
   name: "contributions",
   initialState,
@@ -124,6 +136,11 @@ const contributionsSlice = createSlice({
         state.current = updated
       })
       .addCase(closeContribution.fulfilled, (state, action) => {
+        const updated = action.payload.data
+        state.items = state.items.map((item) => (item.id === updated.id ? updated : item))
+        state.current = updated
+      })
+      .addCase(reopenContribution.fulfilled, (state, action) => {
         const updated = action.payload.data
         state.items = state.items.map((item) => (item.id === updated.id ? updated : item))
         state.current = updated

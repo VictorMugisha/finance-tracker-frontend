@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowLeft, Loader2, Lock, Plus } from "lucide-react"
+import { ArrowLeft, Layers, Loader2, Lock, LockOpen, Plus } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useAssignments } from "@/features/assignments/hooks/useAssignments"
-import type { AssignmentDto } from "@/features/assignments/types/assignment"
+import type { AssignmentDto, AssignBulkInput } from "@/features/assignments/types/assignment"
 import AssignmentFormDialog from "@/features/assignments/components/AssignmentFormDialog"
+import AssignBulkDialog from "@/features/assignments/components/AssignBulkDialog"
 import { usePaymentActions } from "@/features/payments/hooks/usePayments"
 import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
@@ -40,22 +41,26 @@ export default function ContributionDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { contribution, report, status, refresh, close } = useContributionDetail(id)
+  const { contribution, report, status, refresh, close, reopen } = useContributionDetail(id)
   const {
     items: assignments,
     create: createAssignment,
     update: updateAssignment,
     remove: removeAssignment,
+    assignBulk: assignBulkAction,
+    refresh: refreshAssignments,
   } = useAssignments(id)
   const { create: createPayment } = usePaymentActions()
 
   const [closeOpen, setCloseOpen] = useState(false)
   const [assignmentOpen, setAssignmentOpen] = useState(false)
   const [editingAssignment, setEditingAssignment] = useState<AssignmentDto | null>(null)
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentMember, setPaymentMember] = useState<{ id: string; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<AssignmentDto | null>(null)
   const { key: assignmentFormKey, remount: remountAssignmentForm } = useRemountKey()
+  const { key: bulkAssignKey, remount: remountBulkAssign } = useRemountKey()
   const { key: paymentFormKey, remount: remountPaymentForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
@@ -98,6 +103,11 @@ export default function ContributionDetailPage() {
     setEditingAssignment(null)
     remountAssignmentForm()
     setAssignmentOpen(true)
+  }
+
+  const openAssignBulk = () => {
+    remountBulkAssign()
+    setBulkAssignOpen(true)
   }
 
   const openEditAssignment = (memberId: string) => {
@@ -160,6 +170,15 @@ export default function ContributionDetailPage() {
     return ok
   }
 
+  const handleAssignBulk = async (input: AssignBulkInput): Promise<boolean> => {
+    const result = await assignBulkAction(input)
+    if (result) {
+      refreshAssignments()
+      refresh()
+    }
+    return result !== null
+  }
+
   return (
     <div className="flex min-h-svh flex-col">
       <AppHeader />
@@ -205,6 +224,11 @@ export default function ContributionDetailPage() {
               <Lock className="size-4" />
               Close
             </Button>
+          ) : canUpdate ? (
+            <Button variant="outline" onClick={() => void reopen()}>
+              <LockOpen className="size-4" />
+              Reopen
+            </Button>
           ) : null}
         </div>
 
@@ -228,6 +252,12 @@ export default function ContributionDetailPage() {
             <Button onClick={openAddAssignment}>
               <Plus className="size-4" />
               Add Assignment
+            </Button>
+          ) : null}
+          {canAssign ? (
+            <Button variant="outline" onClick={openAssignBulk}>
+              <Layers className="size-4" />
+              Assign multiple
             </Button>
           ) : null}
           {canRecordPayment ? (
@@ -257,6 +287,15 @@ export default function ContributionDetailPage() {
         onOpenChange={setAssignmentOpen}
         assignment={editingAssignment}
         onSubmit={handleAssignmentSubmit}
+      />
+      <AssignBulkDialog
+        key={`bulk-assign-${bulkAssignKey}`}
+        open={bulkAssignOpen}
+        onOpenChange={setBulkAssignOpen}
+        existingAmounts={Object.fromEntries(
+          assignments.map((assignment) => [assignment.memberId, assignment.requiredAmount])
+        )}
+        onSubmit={handleAssignBulk}
       />
       <PaymentFormDialog
         key={`payment-${paymentFormKey}`}

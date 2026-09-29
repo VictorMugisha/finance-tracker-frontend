@@ -43,6 +43,11 @@ async function closeContribution(id: string): Promise<Envelope<ContributionDto>>
   return res.data
 }
 
+async function reopenContribution(id: string): Promise<Envelope<ContributionDto>> {
+  const res = await api.post<Envelope<ContributionDto>>(`/contributions/${id}/reopen`)
+  return res.data
+}
+
 async function getReport(id: string): Promise<Envelope<ContributionReportResponse>> {
   const res = await api.get<Envelope<ContributionReportResponse>>(`/contributions/${id}/report`)
   return res.data
@@ -59,6 +64,7 @@ export const contributionsApi = {
   createContribution,
   updateContribution,
   closeContribution,
+  reopenContribution,
   getReport,
   getBalance,
 }

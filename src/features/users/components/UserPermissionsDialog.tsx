@@ -62,13 +62,13 @@ export default function UserPermissionsDialog({
             permissions.map((permission) => (
               <label
                 key={permission.key}
-                className="flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2"
+                className="flex min-h-11 cursor-pointer items-start gap-2 rounded-lg border px-3 py-2.5"
               >
                 <input
                   type="checkbox"
                   checked={selected.includes(permission.key)}
                   onChange={() => toggle(permission.key)}
-                  className="mt-0.5 size-4"
+                  className="mt-0.5 size-6 accent-primary"
                 />
                 <span className="min-w-0 text-sm">
                   <span className="font-medium">{permission.key}</span>

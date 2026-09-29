@@ -1,9 +1,15 @@
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import toast from "react-hot-toast"
 import { formatErrorToast, formatToastMessage } from "@/api/errors"
 import { useAppDispatch, useAppSelector } from "@/hooks/redux"
-import type { CreateAssignmentInput, UpdateAssignmentInput } from "../types/assignment"
+import type {
+  AssignBulkInput,
+  AssignBulkResult,
+  CreateAssignmentInput,
+  UpdateAssignmentInput,
+} from "../types/assignment"
 import {
+  assignBulk as assignBulkThunk,
   createAssignment,
   fetchAssignments,
   removeAssignment,
@@ -19,6 +25,10 @@ export function useAssignments(contributionId: string) {
 
   useEffect(() => {
     dispatch(resetAssignments())
+    void dispatch(fetchAssignments(contributionId))
+  }, [dispatch, contributionId])
+
+  const refresh = useCallback(() => {
     void dispatch(fetchAssignments(contributionId))
   }, [dispatch, contributionId])
 
@@ -57,5 +67,16 @@ export function useAssignments(contributionId: string) {
     }
   }
 
-  return { items, status, error, create, update, remove }
+  const assignBulk = async (input: AssignBulkInput): Promise<AssignBulkResult | null> => {
+    try {
+      const envelope = await dispatch(assignBulkThunk({ contributionId, input })).unwrap()
+      toast.success(`${envelope.data.assigned} members assigned`)
+      return envelope.data
+    } catch (err) {
+      toast.error(formatErrorToast(err))
+      return null
+    }
+  }
+
+  return { items, status, error, refresh, create, update, remove, assignBulk }
 }

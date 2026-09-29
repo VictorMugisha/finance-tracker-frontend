@@ -4,6 +4,8 @@ import type { ErrorToastPayload } from "@/api/errors"
 import { toErrorToastPayload } from "@/api/errors"
 import { assignmentsApi } from "../api/assignmentsApi"
 import type {
+  AssignBulkInput,
+  AssignBulkResult,
   AssignmentDto,
   CreateAssignmentInput,
   UpdateAssignmentInput,
@@ -57,9 +59,21 @@ export const removeAssignment = createAsyncThunk<
   Envelope<AssignmentDto>,
   { contributionId: string; assignmentId: string },
   { rejectValue: ErrorToastPayload }
->("assignments/removeAssignment", async ({ contributionId, assignmentId }, { rejectWithValue }) => {
+>('assignments/removeAssignment', async ({ contributionId, assignmentId }, { rejectWithValue }) => {
   try {
     return await assignmentsApi.removeAssignment(contributionId, assignmentId)
+  } catch (error) {
+    return rejectWithValue(toErrorToastPayload(error))
+  }
+})
+
+export const assignBulk = createAsyncThunk<
+  Envelope<AssignBulkResult>,
+  { contributionId: string; input: AssignBulkInput },
+  { rejectValue: ErrorToastPayload }
+>("assignments/assignBulk", async ({ contributionId, input }, { rejectWithValue }) => {
+  try {
+    return await assignmentsApi.assignBulk(contributionId, input)
   } catch (error) {
     return rejectWithValue(toErrorToastPayload(error))
   }

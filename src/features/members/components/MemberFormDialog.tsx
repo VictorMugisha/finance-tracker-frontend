@@ -37,7 +37,7 @@ export default function MemberFormDialog({
 }: MemberFormDialogProps) {
   const [name, setName] = useState(member?.name ?? "")
   const [phone, setPhone] = useState(member?.phone ?? "")
-  const [role, setRole] = useState<GroupRole | null>(member?.role ?? null)
+  const [role, setRole] = useState<GroupRole>(member?.role ?? "MEMBER")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const PHONE_REGEX = /^07\d{8}$/
@@ -49,7 +49,11 @@ export default function MemberFormDialog({
       return
     }
     setIsSubmitting(true)
-    const ok = await onSubmit({ name: name.trim(), phone: phone.trim() || null, role })
+    const ok = await onSubmit({
+      name: name.trim(),
+      phone: phone.trim() || null,
+      role,
+    })
     setIsSubmitting(false)
     if (ok) {
       onOpenChange(false)
@@ -97,15 +101,12 @@ export default function MemberFormDialog({
           <div className="flex flex-col gap-2">
             <Label>Role</Label>
             <SearchableSelectDropdown
-              options={[
-                { value: "none", label: "No role" },
-                ...ROLES.map((roleOption) => ({
-                  value: roleOption.value,
-                  label: roleOption.label,
-                })),
-              ]}
-              value={role ?? "none"}
-              onChange={(value) => setRole(value === "none" ? null : (value as GroupRole))}
+              options={ROLES.map((roleOption) => ({
+                value: roleOption.value,
+                label: roleOption.label,
+              }))}
+              value={role}
+              onChange={(value) => setRole(value as GroupRole)}
               searchPlaceholder="Search..."
               emptyMessage="No results found."
             />

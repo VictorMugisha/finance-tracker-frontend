@@ -14,3 +14,12 @@ export interface CreateAssignmentInput {
 export interface UpdateAssignmentInput {
   requiredAmount: string
 }
+
+export interface AssignBulkInput {
+  memberIds: string[]
+  amount: string
+}
+
+export interface AssignBulkResult {
+  assigned: number
+}
