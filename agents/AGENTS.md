@@ -165,12 +165,14 @@ psql -d postgres -c "CREATE DATABASE finance_tracker_db OWNER victor;"
   TARGETED contribution is a bulk upsert of `requiredAmount` for a set of selected
   members. Do not reintroduce a persisted/global tier model or link tiers to members.
 - **Recurring contributions** are a parent `RecurringContribution` plus per-period
-  `Contribution` rows (`recurringContributionId`, `recurringPeriod`, `periodLabel`).
-  Each period is a normal TARGETED contribution. `targetAmount` on the recurring is
-  the **per-period** target (there is no grand total). Rollover creates the next
-  period and copies the latest period's assignments, skipping inactive members.
-  `GET /contributions` excludes recurring periods (`recurringContributionId: null`);
-  periods are only reachable inside the recurring's detail page.
+  `Contribution` rows (`recurringContributionId`, `recurringPeriod`). Each period is a
+  normal TARGETED contribution with its **own title** (set on rollover, editable inline
+  from the recurring detail page). `targetAmount` on the recurring is the **per-period**
+  target (there is no grand total). `recurringPeriod` is internal ordering only — it is
+  not shown as "Period N". Rollover creates the next period (requiring a title) and
+  copies the latest period's assignments, skipping inactive members. `GET
+  /contributions` excludes recurring periods (`recurringContributionId: null`); periods
+  are only reachable inside the recurring's detail page.
 - The `Outstanding` stat on a contribution = `target − disbursed` (not
   `target − collected`, since collected may legitimately exceed the target).
 

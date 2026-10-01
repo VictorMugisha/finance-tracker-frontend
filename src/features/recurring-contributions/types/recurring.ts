@@ -52,7 +52,7 @@ export interface RolloverResult {
 }
 
 export interface RolloverInput {
-  label: string | null
+  title: string
 }
 
 export interface CreateRecurringInput {

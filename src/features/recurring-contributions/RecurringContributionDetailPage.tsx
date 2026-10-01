@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowLeft, Lock, LockOpen, Pencil, Receipt, RefreshCw } from "lucide-react"
+import { ArrowLeft, Lock, LockOpen, Pencil, RefreshCw } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
@@ -16,12 +16,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
-import { useExpenseActions } from "@/features/expenses/hooks/useExpenses"
-import ExpenseFormDialog from "@/features/expenses/components/ExpenseFormDialog"
-import type { CreateExpenseInput } from "@/features/expenses/types/expense"
 import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import RolloverDialog from "./components/RolloverDialog"
+import RenamePeriodDialog from "./components/RenamePeriodDialog"
 import RecurringContributionFormDialog, {
   type RecurringSubmitInput,
 } from "./components/RecurringContributionFormDialog"
@@ -46,22 +44,20 @@ export default function RecurringContributionDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { recurring, periods, report, detailStatus, refresh, rollover, close, reopen } =
+  const { recurring, periods, report, detailStatus, rollover, renamePeriod, close, reopen } =
     useRecurringDetail(id)
   const { update } = useRecurring()
-  const { create: createExpense } = useExpenseActions()
   const [closeOpen, setCloseOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [rolloverOpen, setRolloverOpen] = useState(false)
-  const [expenseOpen, setExpenseOpen] = useState(false)
+  const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null)
   const { key: editKey, remount: remountEdit } = useRemountKey()
   const { key: rolloverKey, remount: remountRollover } = useRemountKey()
-  const { key: expenseFormKey, remount: remountExpenseForm } = useRemountKey()
+  const { key: renameKey, remount: remountRename } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canCreate = has("contributions:create")
   const canWrite = has("contributions:update")
-  const canRecordExpense = has("expenses:record")
 
   const openEdit = () => {
     remountEdit()
@@ -73,21 +69,18 @@ export default function RecurringContributionDetailPage() {
     setRolloverOpen(true)
   }
 
+  const openRename = (period: { id: string; title: string }) => {
+    setRenameTarget(period)
+    remountRename()
+  }
+
+  const handleRename = async (title: string): Promise<boolean> => {
+    if (!renameTarget) return false
+    return renamePeriod(renameTarget.id, title)
+  }
+
   const handleEdit = async (input: RecurringSubmitInput) => {
     return update(id, input)
-  }
-
-  const openRecordExpense = () => {
-    remountExpenseForm()
-    setExpenseOpen(true)
-  }
-
-  const handleExpenseSubmit = async (input: CreateExpenseInput): Promise<boolean> => {
-    const ok = await createExpense(input)
-    if (ok) {
-      refresh()
-    }
-    return ok
   }
 
   if (detailStatus === "loading" || detailStatus === "idle") {
@@ -135,12 +128,6 @@ export default function RecurringContributionDetailPage() {
   const members = report?.members ?? []
   const totalRequired = members.reduce((sum, m) => sum + Number(m.totalRequired), 0)
   const totalPaid = members.reduce((sum, m) => sum + Number(m.totalPaid), 0)
-
-  const periodOptions = periods.map((period) => ({
-    id: period.id,
-    title: period.title,
-    subtitle: period.periodLabel ?? `Period ${period.recurringPeriod}`,
-  }))
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -190,12 +177,6 @@ export default function RecurringContributionDetailPage() {
               Edit
             </Button>
           ) : null}
-          {canRecordExpense ? (
-            <Button variant="outline" onClick={openRecordExpense}>
-              <Receipt className="size-4" />
-              Record expense
-            </Button>
-          ) : null}
           {canWrite && !isClosed ? (
             <Button variant="outline" onClick={() => setCloseOpen(true)}>
               <Lock className="size-4" />
@@ -239,37 +220,41 @@ export default function RecurringContributionDetailPage() {
             ) : (
               <ul className="flex flex-col gap-2">
                 {periods.map((period) => (
-                  <li key={period.id}>
+                  <li key={period.id} className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => navigate(`/contributions/${period.id}`)}
-                      className="flex w-full items-center justify-between gap-4 rounded-lg border px-4 py-3 text-left transition-colors hover:bg-muted"
+                      className="flex flex-1 items-center justify-between gap-4 rounded-lg border px-4 py-3 text-left transition-colors hover:bg-muted"
                     >
                       <div className="min-w-0">
                         <p className="font-medium">{period.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {period.periodLabel ?? `Period ${period.recurringPeriod}`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Collected {formatMoney(period.totalCollected)}
-                        </p>
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          <span>Collected {formatMoney(period.totalCollected)}</span>
+                          <span>Required {formatMoney(period.totalRequired)}</span>
+                          <span>Disbursed {formatMoney(period.totalDisbursed)}</span>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-medium",
-                            period.status === "OPEN"
-                              ? "bg-emerald-500/10 text-emerald-600"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {period.status}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {formatMoney(period.totalRequired)} required
-                        </span>
-                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                          period.status === "OPEN"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {period.status}
+                      </span>
                     </button>
+                    {canWrite ? (
+                      <Button
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => openRename({ id: period.id, title: period.title })}
+                      >
+                        <Pencil className="size-4" />
+                        Edit
+                      </Button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -326,7 +311,19 @@ export default function RecurringContributionDetailPage() {
         key={rolloverKey}
         open={rolloverOpen}
         onOpenChange={setRolloverOpen}
+        defaultTitle={recurring.title}
         onSubmit={rollover}
+      />
+      <RenamePeriodDialog
+        key={`rename-${renameKey}`}
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenameTarget(null)
+          }
+        }}
+        title={renameTarget?.title ?? ""}
+        onSubmit={handleRename}
       />
       <RecurringContributionFormDialog
         key={editKey}
@@ -334,14 +331,6 @@ export default function RecurringContributionDetailPage() {
         onOpenChange={setEditOpen}
         recurring={recurring}
         onSubmit={handleEdit}
-      />
-      <ExpenseFormDialog
-        key={`expense-${expenseFormKey}`}
-        open={expenseOpen}
-        onOpenChange={setExpenseOpen}
-        expense={null}
-        periodOptions={periodOptions}
-        onSubmit={handleExpenseSubmit}
       />
       <ConfirmDialog
         open={closeOpen}

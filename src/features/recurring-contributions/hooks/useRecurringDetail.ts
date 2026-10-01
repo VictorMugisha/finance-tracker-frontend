@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from "react"
 import toast from "react-hot-toast"
-import { formatErrorToast } from "@/api/errors"
+import { formatErrorToast, formatToastMessage } from "@/api/errors"
 import { useAppDispatch, useAppSelector } from "@/hooks/redux"
+import { updateContribution } from "@/features/contributions/slice/contributionsSlice"
 import {
   closeRecurring,
   fetchRecurringDetail,
@@ -30,12 +31,26 @@ export function useRecurringDetail(id: string) {
     void dispatch(fetchRecurringReport(id))
   }, [dispatch, id])
 
-  const rollover = async (label: string | null): Promise<boolean> => {
+  const rollover = async (title: string): Promise<boolean> => {
     try {
-      const envelope = await dispatch(rolloverRecurring({ id, input: { label } })).unwrap()
+      const envelope = await dispatch(rolloverRecurring({ id, input: { title } })).unwrap()
       const suffix =
         envelope.data.assigned > 0 ? ` (${envelope.data.assigned} members assigned)` : ""
       toast.success(`Period ${envelope.data.period} created${suffix}`)
+      refresh()
+      return true
+    } catch (err) {
+      toast.error(formatErrorToast(err))
+      return false
+    }
+  }
+
+  const renamePeriod = async (periodId: string, title: string): Promise<boolean> => {
+    try {
+      const envelope = await dispatch(
+        updateContribution({ id: periodId, input: { title } })
+      ).unwrap()
+      toast.success(formatToastMessage(envelope.statusCode, envelope.message))
       refresh()
       return true
     } catch (err) {
@@ -66,5 +81,16 @@ export function useRecurringDetail(id: string) {
     }
   }
 
-  return { recurring, periods, report, detailStatus, reportStatus, refresh, rollover, close, reopen }
+  return {
+    recurring,
+    periods,
+    report,
+    detailStatus,
+    reportStatus,
+    refresh,
+    rollover,
+    renamePeriod,
+    close,
+    reopen,
+  }
 }

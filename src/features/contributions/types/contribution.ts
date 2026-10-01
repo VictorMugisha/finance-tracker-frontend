@@ -12,7 +12,6 @@ export interface ContributionDto {
   createdAt: string
   recurringContributionId: string | null
   recurringPeriod: number | null
-  periodLabel: string | null
   totalCollected: string
   totalRequired: string
   totalDisbursed: string

@@ -13,29 +13,28 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-interface RolloverDialogProps {
+interface RenamePeriodDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  defaultTitle?: string
+  title: string
   onSubmit: (title: string) => Promise<boolean>
 }
 
-export default function RolloverDialog({
+export default function RenamePeriodDialog({
   open,
   onOpenChange,
-  defaultTitle = "",
+  title,
   onSubmit,
-}: RolloverDialogProps) {
-  const [title, setTitle] = useState(defaultTitle)
+}: RenamePeriodDialogProps) {
+  const [value, setValue] = useState(title)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
-    const ok = await onSubmit(title.trim())
+    const ok = await onSubmit(value.trim())
     setIsSubmitting(false)
     if (ok) {
-      setTitle(defaultTitle)
       onOpenChange(false)
     }
   }
@@ -44,19 +43,16 @@ export default function RolloverDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Roll over to the next period</DialogTitle>
-          <DialogDescription>
-            Creates a new period and carries over the latest required amounts. Inactive members are
-            skipped.
-          </DialogDescription>
+          <DialogTitle>Rename period</DialogTitle>
+          <DialogDescription>Give this period its own distinct title.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="rollover-title">Period title</Label>
+            <Label htmlFor="rename-period-title">Title</Label>
             <Input
-              id="rollover-title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              id="rename-period-title"
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
               placeholder="e.g. January 2026"
               required
             />
@@ -70,8 +66,8 @@ export default function RolloverDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || title.trim() === ""}>
-              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : "Roll over"}
+            <Button type="submit" disabled={isSubmitting || value.trim() === ""}>
+              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : "Save"}
             </Button>
           </DialogFooter>
         </form>

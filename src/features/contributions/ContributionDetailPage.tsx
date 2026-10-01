@@ -262,11 +262,6 @@ export default function ContributionDetailPage() {
                 {contribution.status}
               </span>
             </div>
-            {contribution.periodLabel ? (
-              <p className="mt-1 text-sm font-medium text-muted-foreground">
-                {contribution.periodLabel}
-              </p>
-            ) : null}
             {contribution.description ? (
               <p className="mt-1 text-sm text-muted-foreground">{contribution.description}</p>
             ) : null}
