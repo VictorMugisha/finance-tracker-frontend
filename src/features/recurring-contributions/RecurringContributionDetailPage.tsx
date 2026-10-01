@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { ArrowLeft, Lock, LockOpen, Loader2, Pencil, RefreshCw } from "lucide-react"
+import { ArrowLeft, Lock, LockOpen, Pencil, Receipt, RefreshCw } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -15,6 +16,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
+import { useExpenseActions } from "@/features/expenses/hooks/useExpenses"
+import ExpenseFormDialog from "@/features/expenses/components/ExpenseFormDialog"
+import type { CreateExpenseInput } from "@/features/expenses/types/expense"
 import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import RolloverDialog from "./components/RolloverDialog"
@@ -42,18 +46,22 @@ export default function RecurringContributionDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { recurring, periods, report, detailStatus, rollover, close, reopen } =
+  const { recurring, periods, report, detailStatus, refresh, rollover, close, reopen } =
     useRecurringDetail(id)
   const { update } = useRecurring()
+  const { create: createExpense } = useExpenseActions()
   const [closeOpen, setCloseOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [rolloverOpen, setRolloverOpen] = useState(false)
+  const [expenseOpen, setExpenseOpen] = useState(false)
   const { key: editKey, remount: remountEdit } = useRemountKey()
   const { key: rolloverKey, remount: remountRollover } = useRemountKey()
+  const { key: expenseFormKey, remount: remountExpenseForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canCreate = has("contributions:create")
   const canWrite = has("contributions:update")
+  const canRecordExpense = has("expenses:record")
 
   const openEdit = () => {
     remountEdit()
@@ -69,13 +77,45 @@ export default function RecurringContributionDetailPage() {
     return update(id, input)
   }
 
+  const openRecordExpense = () => {
+    remountExpenseForm()
+    setExpenseOpen(true)
+  }
+
+  const handleExpenseSubmit = async (input: CreateExpenseInput): Promise<boolean> => {
+    const ok = await createExpense(input)
+    if (ok) {
+      refresh()
+    }
+    return ok
+  }
+
   if (detailStatus === "loading" || detailStatus === "idle") {
     return (
       <div className="flex min-h-svh flex-col">
         <AppHeader />
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <main className="mx-auto w-full max-w-4xl flex-1 p-4">
+          <button
+            type="button"
+            onClick={() => navigate("/recurring-contributions")}
+            className="mb-4 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Back to recurring contributions
+          </button>
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+          <div className="mb-4 grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-20 rounded-lg" />
+            ))}
+          </div>
+          <Skeleton className="h-40 w-full" />
+        </main>
       </div>
     )
   }
@@ -95,6 +135,12 @@ export default function RecurringContributionDetailPage() {
   const members = report?.members ?? []
   const totalRequired = members.reduce((sum, m) => sum + Number(m.totalRequired), 0)
   const totalPaid = members.reduce((sum, m) => sum + Number(m.totalPaid), 0)
+
+  const periodOptions = periods.map((period) => ({
+    id: period.id,
+    title: period.title,
+    subtitle: period.periodLabel ?? `Period ${period.recurringPeriod}`,
+  }))
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -119,9 +165,7 @@ export default function RecurringContributionDetailPage() {
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-xs font-medium",
-                  isClosed
-                    ? "bg-muted text-muted-foreground"
-                    : "bg-emerald-500/10 text-emerald-600"
+                  isClosed ? "bg-muted text-muted-foreground" : "bg-emerald-500/10 text-emerald-600"
                 )}
               >
                 {isClosed ? "Closed" : "Open"}
@@ -144,6 +188,12 @@ export default function RecurringContributionDetailPage() {
             <Button variant="outline" onClick={openEdit}>
               <Pencil className="size-4" />
               Edit
+            </Button>
+          ) : null}
+          {canRecordExpense ? (
+            <Button variant="outline" onClick={openRecordExpense}>
+              <Receipt className="size-4" />
+              Record expense
             </Button>
           ) : null}
           {canWrite && !isClosed ? (
@@ -254,7 +304,9 @@ export default function RecurringContributionDetailPage() {
                         <TableCell className="text-right">
                           {formatMoney(member.totalRequired)}
                         </TableCell>
-                        <TableCell className="text-right">{formatMoney(member.totalPaid)}</TableCell>
+                        <TableCell className="text-right">
+                          {formatMoney(member.totalPaid)}
+                        </TableCell>
                         <TableCell
                           className={cn("text-right font-medium", balanceColor(member.balance))}
                         >
@@ -282,6 +334,14 @@ export default function RecurringContributionDetailPage() {
         onOpenChange={setEditOpen}
         recurring={recurring}
         onSubmit={handleEdit}
+      />
+      <ExpenseFormDialog
+        key={`expense-${expenseFormKey}`}
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        expense={null}
+        periodOptions={periodOptions}
+        onSubmit={handleExpenseSubmit}
       />
       <ConfirmDialog
         open={closeOpen}

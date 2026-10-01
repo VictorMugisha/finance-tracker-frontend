@@ -15,6 +15,7 @@ import { Link } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAppDispatch, useAppSelector } from "@/hooks/redux"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { fetchBalance } from "@/features/contributions/slice/contributionsSlice"
@@ -51,10 +52,11 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const dispatch = useAppDispatch()
   const balance = useAppSelector((state) => state.contributions.balance)
+  const balanceStatus = useAppSelector((state) => state.contributions.balanceStatus)
   const hasReports = user ? user.isAdmin || user.permissions.includes("reports:view") : false
   const canRecord = user ? user.isAdmin || user.permissions.includes("expenses:record") : false
 
-  const { stats, refresh: refreshStats } = useStats(hasReports)
+  const { stats, status: statsStatus, refresh: refreshStats } = useStats(hasReports)
   const { create: createExpense } = useExpenseActions()
 
   const [showTotals, setShowTotals] = useState(false)
@@ -135,6 +137,22 @@ export default function DashboardPage() {
           </Card>
         ) : null}
 
+        {hasReports && (balanceStatus === "idle" || balanceStatus === "loading") && !balance ? (
+          <Card className="mb-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <Skeleton className="h-4 w-20" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Skeleton className="h-8 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </CardContent>
+          </Card>
+        ) : null}
+
         {hasReports && stats ? (
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
             <StatCard icon={<Users className="size-4" />} label="Members" value={stats.members} />
@@ -154,6 +172,14 @@ export default function DashboardPage() {
               label="Expenses"
               value={stats.expenses}
             />
+          </div>
+        ) : null}
+
+        {hasReports && (statsStatus === "idle" || statsStatus === "loading") && !stats ? (
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-16 rounded-xl" />
+            ))}
           </div>
         ) : null}
 

@@ -17,6 +17,7 @@ interface ContributionsState {
   status: "idle" | "loading" | "succeeded" | "failed"
   error: string | null
   balance: GroupBalanceResponse | null
+  balanceStatus: "idle" | "loading" | "succeeded" | "failed"
   current: ContributionDto | null
   report: ContributionReportResponse | null
   detailStatus: "idle" | "loading" | "succeeded" | "failed"
@@ -27,6 +28,7 @@ const initialState: ContributionsState = {
   status: "idle",
   error: null,
   balance: null,
+  balanceStatus: "idle",
   current: null,
   report: null,
   detailStatus: "idle",
@@ -124,8 +126,15 @@ const contributionsSlice = createSlice({
         state.status = "failed"
         state.error = action.error.message ?? "Failed to fetch contributions"
       })
+      .addCase(fetchBalance.pending, (state) => {
+        state.balanceStatus = "loading"
+      })
       .addCase(fetchBalance.fulfilled, (state, action) => {
+        state.balanceStatus = "succeeded"
         state.balance = action.payload.data
+      })
+      .addCase(fetchBalance.rejected, (state) => {
+        state.balanceStatus = "failed"
       })
       .addCase(createContribution.fulfilled, (state, action) => {
         state.items = [action.payload.data, ...state.items]

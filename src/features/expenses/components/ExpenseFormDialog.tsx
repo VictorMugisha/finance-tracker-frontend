@@ -25,11 +25,19 @@ import {
   type ExpenseType,
 } from "../types/expense"
 
+interface ExpensePeriodOption {
+  id: string
+  title: string
+  subtitle?: string
+}
+
 interface ExpenseFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   expense: ExpenseDto | null
   onSubmit: (input: CreateExpenseInput) => Promise<boolean>
+  defaultContribution?: { id: string; title: string } | null
+  periodOptions?: ExpensePeriodOption[]
 }
 
 export default function ExpenseFormDialog({
@@ -37,13 +45,20 @@ export default function ExpenseFormDialog({
   onOpenChange,
   expense,
   onSubmit,
+  defaultContribution = null,
+  periodOptions,
 }: ExpenseFormDialogProps) {
   const { contributions, canRead: canReadContributions } = useContributionsOptions()
   const { members } = useMembersOptions()
 
   const [type, setType] = useState<ExpenseType>(expense?.type ?? "OTHER")
   const [amount, setAmount] = useState(expense?.amount ?? "")
-  const [contributionId, setContributionId] = useState(expense?.contributionId ?? "")
+  const [contributionId, setContributionId] = useState(
+    expense?.contributionId ??
+      defaultContribution?.id ??
+      periodOptions?.[periodOptions.length - 1]?.id ??
+      ""
+  )
   const [recipientMemberId, setRecipientMemberId] = useState(expense?.recipientMemberId ?? "")
   const [description, setDescription] = useState(expense?.description ?? "")
   const [spentAt, setSpentAt] = useState<Date>(
@@ -68,6 +83,12 @@ export default function ExpenseFormDialog({
     { value: "none", label: "No recipient" },
     ...members.map((member) => ({ value: member.id, label: member.name })),
   ]
+
+  const periodDropdownOptions =
+    periodOptions?.map((period) => ({
+      value: period.id,
+      label: period.subtitle ? `${period.title} (${period.subtitle})` : period.title,
+    })) ?? []
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -124,7 +145,25 @@ export default function ExpenseFormDialog({
               decimals={2}
             />
           </div>
-          {canReadContributions ? (
+          {defaultContribution ? (
+            <div className="flex flex-col gap-2">
+              <Label>Contribution</Label>
+              <p className="rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                {defaultContribution.title}
+              </p>
+            </div>
+          ) : periodOptions ? (
+            <div className="flex flex-col gap-2">
+              <Label>Period</Label>
+              <SearchableSelectDropdown
+                options={periodDropdownOptions}
+                value={contributionId}
+                onChange={setContributionId}
+                searchPlaceholder="Search periods..."
+                emptyMessage="No periods found."
+              />
+            </div>
+          ) : canReadContributions ? (
             <div className="flex flex-col gap-2">
               <Label>Contribution (optional)</Label>
               <SearchableSelectDropdown

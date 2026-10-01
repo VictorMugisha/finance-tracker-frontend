@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { ArrowLeft, Layers, Loader2, Lock, LockOpen, Plus } from "lucide-react"
+import { ArrowLeft, Layers, Lock, LockOpen, Plus, Receipt } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import AppHeader from "@/components/shared/AppHeader"
 import ConfirmDialog from "@/components/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useAssignments } from "@/features/assignments/hooks/useAssignments"
@@ -13,6 +14,9 @@ import AssignBulkDialog from "@/features/assignments/components/AssignBulkDialog
 import { usePaymentActions } from "@/features/payments/hooks/usePayments"
 import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
+import { useExpenseActions } from "@/features/expenses/hooks/useExpenses"
+import ExpenseFormDialog from "@/features/expenses/components/ExpenseFormDialog"
+import type { CreateExpenseInput } from "@/features/expenses/types/expense"
 import { useRemountKey } from "@/hooks/useRemountKey"
 import { formatMoney } from "@/utils/format"
 import ReportTable from "./components/ReportTable"
@@ -51,6 +55,7 @@ export default function ContributionDetailPage() {
     refresh: refreshAssignments,
   } = useAssignments(id)
   const { create: createPayment } = usePaymentActions()
+  const { create: createExpense } = useExpenseActions()
 
   const [closeOpen, setCloseOpen] = useState(false)
   const [assignmentOpen, setAssignmentOpen] = useState(false)
@@ -58,21 +63,44 @@ export default function ContributionDetailPage() {
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentMember, setPaymentMember] = useState<{ id: string; name: string } | null>(null)
+  const [expenseOpen, setExpenseOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<AssignmentDto | null>(null)
   const { key: assignmentFormKey, remount: remountAssignmentForm } = useRemountKey()
   const { key: bulkAssignKey, remount: remountBulkAssign } = useRemountKey()
   const { key: paymentFormKey, remount: remountPaymentForm } = useRemountKey()
+  const { key: expenseFormKey, remount: remountExpenseForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
   const canUpdate = has("contributions:update")
+  const canRecordExpense = has("expenses:record")
 
   if (status === "loading" || status === "idle") {
     return (
       <div className="flex min-h-svh flex-col">
         <AppHeader />
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <main className="mx-auto w-full max-w-5xl flex-1 p-4">
+          <button
+            type="button"
+            onClick={() => navigate("/contributions")}
+            className="mb-4 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Back to contributions
+          </button>
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-11 w-32" />
+          </div>
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-20 rounded-lg" />
+            ))}
+          </div>
+          <Skeleton className="h-40 w-full" />
+        </main>
       </div>
     )
   }
@@ -130,6 +158,11 @@ export default function ContributionDetailPage() {
     setPaymentOpen(true)
   }
 
+  const openRecordExpense = () => {
+    remountExpenseForm()
+    setExpenseOpen(true)
+  }
+
   const viewDetails = (memberId: string) => {
     navigate(`/contributions/${contribution.id}/members/${memberId}`)
   }
@@ -155,6 +188,14 @@ export default function ContributionDetailPage() {
       note: input.note,
       paidAt: input.paidAt,
     })
+    if (ok) {
+      refresh()
+    }
+    return ok
+  }
+
+  const handleExpenseSubmit = async (input: CreateExpenseInput): Promise<boolean> => {
+    const ok = await createExpense({ ...input, contributionId: contribution.id })
     if (ok) {
       refresh()
     }
@@ -230,16 +271,26 @@ export default function ContributionDetailPage() {
               <p className="mt-1 text-sm text-muted-foreground">{contribution.description}</p>
             ) : null}
           </div>
-          {canUpdate && isOpen ? (
-            <Button variant="outline" onClick={() => setCloseOpen(true)}>
-              <Lock className="size-4" />
-              Close
-            </Button>
-          ) : canUpdate ? (
-            <Button variant="outline" onClick={() => void reopen()}>
-              <LockOpen className="size-4" />
-              Reopen
-            </Button>
+          {canUpdate || canRecordExpense ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {canRecordExpense ? (
+                <Button variant="outline" onClick={openRecordExpense}>
+                  <Receipt className="size-4" />
+                  Record expense
+                </Button>
+              ) : null}
+              {canUpdate && isOpen ? (
+                <Button variant="outline" onClick={() => setCloseOpen(true)}>
+                  <Lock className="size-4" />
+                  Close
+                </Button>
+              ) : canUpdate ? (
+                <Button variant="outline" onClick={() => void reopen()}>
+                  <LockOpen className="size-4" />
+                  Reopen
+                </Button>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -313,6 +364,14 @@ export default function ContributionDetailPage() {
         payment={null}
         member={paymentMember}
         onSubmit={handlePaymentSubmit}
+      />
+      <ExpenseFormDialog
+        key={`expense-${expenseFormKey}`}
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        expense={null}
+        defaultContribution={{ id: contribution.id, title: contribution.title }}
+        onSubmit={handleExpenseSubmit}
       />
       <ConfirmDialog
         open={removeTarget !== null}
