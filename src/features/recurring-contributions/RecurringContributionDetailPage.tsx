@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import { formatMoney } from "@/utils/format"
 import RolloverDialog from "./components/RolloverDialog"
 import RenamePeriodDialog from "./components/RenamePeriodDialog"
@@ -46,6 +47,7 @@ export default function RecurringContributionDetailPage() {
   const { user } = useAuth()
   const { recurring, periods, report, detailStatus, rollover, renamePeriod, close, reopen } =
     useRecurringDetail(id)
+  useDocumentTitle(recurring?.title ?? "Recurring contribution")
   const { update } = useRecurring()
   const [closeOpen, setCloseOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)

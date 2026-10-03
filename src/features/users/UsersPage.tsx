@@ -4,6 +4,7 @@ import AppHeader from "@/components/shared/AppHeader"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import UserFormDialog from "./components/UserFormDialog"
 import type { UserFormSubmitInput } from "./components/UserFormDialog"
 import UserPermissionsDialog from "./components/UserPermissionsDialog"
@@ -13,6 +14,7 @@ import type { UserDto } from "./types/user"
 
 export default function UsersPage() {
   const { user } = useAuth()
+  useDocumentTitle("Users")
   const { items, status, error, create, update, setPermissions } = useUsers()
 
   const [formOpen, setFormOpen] = useState(false)

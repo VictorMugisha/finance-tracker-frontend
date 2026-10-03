@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import UserFormDialog from "@/features/users/components/UserFormDialog"
 import type { UserFormSubmitInput } from "@/features/users/components/UserFormDialog"
 import { useUserActions } from "@/features/users/hooks/useUsers"
@@ -16,6 +17,7 @@ import type { CreateMemberInput, MemberDto } from "./types/member"
 
 export default function MembersPage() {
   const { user } = useAuth()
+  useDocumentTitle("Members")
   const { members, status, error, search, setSearch, refresh, create, update, deactivate } =
     useMembers()
   const { create: createUser } = useUserActions()

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDropdown"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import ContributionFormDialog from "./components/ContributionFormDialog"
 import ContributionsList from "./components/ContributionsList"
 import { useContributions } from "./hooks/useContributions"
@@ -21,6 +22,7 @@ import type {
 export default function ContributionsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  useDocumentTitle("Contributions")
   const {
     items,
     status,

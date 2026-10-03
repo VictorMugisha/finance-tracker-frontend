@@ -15,6 +15,7 @@ import {
 import { cn } from "cn"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import { formatMoney } from "@/utils/format"
 import RecurringActionsMenu from "./components/RecurringActionsMenu"
 import RecurringContributionFormDialog, {
@@ -32,6 +33,7 @@ const PERIOD_LABELS: Record<RecurringPeriod, string> = {
 export default function RecurringContributionsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  useDocumentTitle("Recurring contributions")
   const { items, status, error, create, update } = useRecurring()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<RecurringContributionDto | null>(null)
@@ -118,7 +120,10 @@ export default function RecurringContributionsPage() {
                           {recurring.isClosed ? "Closed" : "Open"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                      <TableCell
+                        className="text-right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {canWrite ? (
                           <RecurringActionsMenu recurring={recurring} onEdit={openEdit} />
                         ) : null}

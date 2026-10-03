@@ -6,6 +6,7 @@ import { SearchableSelectDropdown } from "@/components/shared/SearchableSelectDr
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import { useContributionsOptions } from "@/features/contributions/hooks/useContributionsOptions"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import ExpenseFormDialog from "./components/ExpenseFormDialog"
 import ExpensesList from "./components/ExpensesList"
 import { useExpenses } from "./hooks/useExpenses"
@@ -19,6 +20,7 @@ import {
 
 export default function ExpensesPage() {
   const { user } = useAuth()
+  useDocumentTitle("Expenses")
   const [typeFilter, setTypeFilter] = useState<ExpenseType | "all">("all")
   const [contributionFilter, setContributionFilter] = useState<string>("all")
 

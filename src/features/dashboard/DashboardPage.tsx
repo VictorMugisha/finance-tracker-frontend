@@ -24,6 +24,7 @@ import ExpenseFormDialog from "@/features/expenses/components/ExpenseFormDialog"
 import type { CreateExpenseInput } from "@/features/expenses/types/expense"
 import { useStats } from "@/features/stats/hooks/useStats"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import { formatMoney } from "@/utils/format"
 
 interface StatCardProps {
@@ -55,6 +56,7 @@ export default function DashboardPage() {
   const balanceStatus = useAppSelector((state) => state.contributions.balanceStatus)
   const hasReports = user ? user.isAdmin || user.permissions.includes("reports:view") : false
   const canRecord = user ? user.isAdmin || user.permissions.includes("expenses:record") : false
+  useDocumentTitle("Dashboard")
 
   const { stats, status: statsStatus, refresh: refreshStats } = useStats(hasReports)
   const { create: createExpense } = useExpenseActions()

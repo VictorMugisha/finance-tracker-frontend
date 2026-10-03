@@ -18,6 +18,7 @@ import { useExpenseActions } from "@/features/expenses/hooks/useExpenses"
 import ExpenseFormDialog from "@/features/expenses/components/ExpenseFormDialog"
 import type { CreateExpenseInput } from "@/features/expenses/types/expense"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import { formatMoney } from "@/utils/format"
 import ReportTable from "./components/ReportTable"
 import { useContributionDetail } from "./hooks/useContributionDetail"
@@ -46,6 +47,7 @@ export default function ContributionDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { contribution, report, status, refresh, close, reopen } = useContributionDetail(id)
+  useDocumentTitle(contribution?.title ?? "Contribution")
   const {
     items: assignments,
     create: createAssignment,

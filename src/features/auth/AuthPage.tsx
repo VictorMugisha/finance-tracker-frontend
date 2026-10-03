@@ -1,10 +1,12 @@
 import { Navigate } from "react-router-dom"
 import { Loader2, Wallet } from "lucide-react"
 import { useAppSelector } from "@/hooks/redux"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import LoginForm from "./components/LoginForm"
 
 export default function AuthPage() {
   const status = useAppSelector((state) => state.auth.status)
+  useDocumentTitle("Sign in")
 
   if (status === "idle" || status === "loading") {
     return (

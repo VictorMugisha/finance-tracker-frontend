@@ -12,6 +12,7 @@ import PaymentFormDialog from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentFormSubmitInput } from "@/features/payments/components/PaymentFormDialog"
 import type { PaymentDto } from "@/features/payments/types/payment"
 import { useRemountKey } from "@/hooks/useRemountKey"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 import { formatMoney } from "@/utils/format"
 import { useContributionDetail } from "./hooks/useContributionDetail"
 import type { OpenMemberReportItem, TargetedMemberReportItem } from "./types/contribution"
@@ -37,6 +38,12 @@ export default function MemberContributionDetailPage() {
   const { key: correctPaymentFormKey, remount: remountCorrectPaymentForm } = useRemountKey()
 
   const has = (key: string) => (user ? user.isAdmin || user.permissions.includes(key) : false)
+
+  const memberName =
+    report?.members.find((member) => member.memberId === memberId)?.name ??
+    payments[0]?.memberName ??
+    "Member"
+  useDocumentTitle(contribution ? `${memberName} · ${contribution.title}` : "Contribution member")
 
   if (status === "loading" || status === "idle") {
     return (
@@ -67,7 +74,6 @@ export default function MemberContributionDetailPage() {
   const canUpdatePayment = has("payments:update")
 
   const memberEntry = report?.members.find((member) => member.memberId === memberId)
-  const memberName = memberEntry?.name ?? payments[0]?.memberName ?? "Member"
   const assignment = assignments.find((item) => item.memberId === memberId)
 
   const openCorrectPayment = (payment: PaymentDto) => {
